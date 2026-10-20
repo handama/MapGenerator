@@ -1248,7 +1248,7 @@ bool RandomMapGenerator::IsOreClearArea(int x, int y) const
 {
     static const int kOreClearOuter = 8;              // 默认 18x18
     static const int kOreClearOuterIsles = 3;         // 群岛 8x8
-    const int outer = (config_.landType == LandType::Archipelago)
+    const int outer = (config_.landType == RmLandType::Archipelago)
                           ? kOreClearOuterIsles
                           : kOreClearOuter;
     for (const StartingPointRecord& sp : startingPoints_)

@@ -244,7 +244,7 @@ void RandomMapGenerator::AddTiberium()
 
     // [port-only] 群岛：矿柱改由 PlaceArchipelagoOrePillars 统一按"每点相同"放置，
     // GrowTiberiumField 已不再往 terrainObjects_ 里塞 TIBTRE。
-    if (landType == static_cast<int>(LandType::Archipelago))
+    if (landType == static_cast<int>(RmLandType::Archipelago))
         PlaceArchipelagoOrePillars();
 
     // ---- the stage tail (0x598f04 - 0x598fbd) -----------------------------
@@ -276,7 +276,7 @@ void RandomMapGenerator::GrowTiberiumField(CellStruct seed, int target,
     const int overlayBase = variant ? 27 : 102;                 // 0x5a296e
 
     // [port-only] 群岛的矿柱由 PlaceArchipelagoOrePillars 统一放，矿田这里不撒。
-    const bool archipelago = (config_.landType == LandType::Archipelago);
+    const bool archipelago = (config_.landType == RmLandType::Archipelago);
 
     const int capacity = 10 * target;
     std::vector<TiberiumNode> pool(static_cast<size_t>(capacity));

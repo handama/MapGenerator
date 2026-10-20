@@ -20,6 +20,9 @@
 // ============================================================================
 void RandomMapGenerator::DiagLog(const char* fmt, ...)
 {
+    if (!s_bDiagLogEnabled)
+        return;
+
     // 先取 exe 所在文件夹，作为静态目录为空时的回退。
     wchar_t exeDir[MAX_PATH] = {};
     if (GetModuleFileNameW(nullptr, exeDir, MAX_PATH) == 0)
@@ -375,6 +378,19 @@ RandomMapGenerator::RandomMapGenerator()
 // 静态成员的实体定义（声明在 MapGen.h）。
 std::wstring RandomMapGenerator::s_diagDir_;
 
+// [FA2sp] Diagnostic logging is OFF by default - see MapGen.h.
+bool RandomMapGenerator::s_bDiagLogEnabled = false;
+
+// [FA2sp] RMGMD.INI is not read unless the standalone tool asks for it.
+bool RandomMapGenerator::s_bLoadRmgmdIni = false;
+
+// [FA2sp] Empty = look for the theater INI next to the executable.
+std::wstring RandomMapGenerator::s_theaterIniDir;
+
+// [FA2sp] When true, the six Load* passes are skipped and the host's tables
+// (pushed through SetTileCellAttrs / SetOverlayTypes / ...) are used instead.
+bool RandomMapGenerator::s_bUseHostData = false;
+
 // 界面选定输出文件夹后、开始生成前调用：规整成带结尾反斜杠的绝对路径，
 // 目录不存在顺手建出来，并同步给静态 DiagLog。
 void RandomMapGenerator::SetOutputDir(const std::wstring& dir)
@@ -419,8 +435,8 @@ MapSizeResult RandomMapGenerator::CalcMapSize(const MapGenConfig& cfg) const
     float wFrac = (float)cfg.sizeSlider * kOneThird;
     float hFrac = (float)cfg.sizeSlider * kOneThird;
 
-    LandType lt = cfg.landType;
-    if (lt != LandType::Inland && lt != LandType::Mountainous)
+    RmLandType lt = cfg.landType;
+    if (lt != RmLandType::Inland && lt != RmLandType::Mountainous)
     {
         if (wFrac > kSizeClamp) wFrac = kSizeClamp;
         if (hFrac > kSizeClamp) hFrac = kSizeClamp;
@@ -587,13 +603,37 @@ bool RandomMapGenerator::GenerateMapBody(const MapGenConfig& cfg)
 
     ReInitMapData();
 
-    size_ = CalcMapSize(cfg);
+    if (cfg.overrideMapWidth > 0 && cfg.overrideMapHeight > 0)
+    {
+        // [FA2sp] Explicit extent (sub-region painting). Keep the same
+        // W' = W + 4 / H' = H + 12 relationship CalcMapSize produces, so the
+        // rest of the pipeline sees a perfectly ordinary map.
+        size_.mapWidth = cfg.overrideMapWidth;
+        size_.mapHeight = cfg.overrideMapHeight;
+        size_.width = size_.mapWidth - 4;
+        size_.height = size_.mapHeight - 12;
+        size_.workSide = size_.mapWidth + size_.mapHeight + 1;
+    }
+    else
+    {
+        size_ = CalcMapSize(cfg);
+    }
     if (size_.width <= 0 || size_.height <= 0)
         return false;
 
     baseLevel_ = 4;
     usedWaterCells_ = 0;    // RMG this[193]: per-map river/lake budget counter
+
+    // Theater tile families always come from TEMPERATMD.INI / SNOWMD.INI - the
+    // values must match what FA2 loaded, and the file ships loose in the game
+    // folder (s_theaterIniDir points there under the editor).
     LoadTheaterTiles(cfg.theater);   // IsometricTileTypeClass::ReadINI [General]
+
+    // [FA2sp] With host data the remaining five loaders are skipped entirely:
+    // the caller already pushed the same tables (TMP cell attrs, overlay /
+    // ground / tiberium types, neutral tech buildings, houses).
+    if (!s_bUseHostData)
+    {
     // The data the "Recalculating cell attributes" stage reads. LoadTileCellAttrs
     // needs the tile ranges LoadTheaterTiles just produced; the other three come
     // from the rules INI and mirror the engine's start-up loads.
@@ -603,6 +643,7 @@ bool RandomMapGenerator::GenerateMapBody(const MapGenConfig& cfg)
     LoadTiberiums();                 // TiberiumClass::LoadFromINI
     LoadNeutralTechBuildings();      // RulesClass::NeutralTechBuildings + art
     LoadMultiplayerHouses();         // rules [Countries] for the .yrm [Houses]
+    }
 
     InitCells();
     InitWorkArray();
@@ -645,13 +686,13 @@ void RandomMapGenerator::GenerateTerrain()
     // Segment 2: land type dispatch (generator bodies pending)
     switch (config_.landType)
     {
-    case LandType::Archipelago:
+    case RmLandType::Archipelago:
         GenerateArchipelago();
         break;
-    case LandType::Continent:
+    case RmLandType::Continent:
         GenerateContinent();
         break;
-    case LandType::TeamContinent:
+    case RmLandType::TeamContinent:
         GenerateTeamContinent();
         break;
     default:
@@ -1963,6 +2004,17 @@ static void ReadNameList(const char* path, const char* key, std::vector<std::str
 // ---------------------------------------------------------------------------
 bool RandomMapGenerator::ReInitMapData()
 {
+    // [FA2sp] No RMGMD.INI: the host dialog owns these three groups
+    // (RMGMinimumTiberium / RMGMaximumTiberium / MaxTrees / vegetation range).
+    // Everything else in RMGSettings only fed SaveMapFile's [Lighting] block,
+    // which the editor integration does not write.
+    if (!s_bLoadRmgmdIni)
+    {
+        settings_.SetDefaults();
+        iniLoaded_ = false;
+        return false;
+    }
+
     // RMGMD.INI next to the executable (vanilla: game directory)
     wchar_t wdir[MAX_PATH];
     GetModuleFileNameW(nullptr, wdir, MAX_PATH);

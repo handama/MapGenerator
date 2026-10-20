@@ -225,28 +225,28 @@ static MapGenParams ReadParams(HWND hWnd)
 // 加回群岛后 UI 顺序与 LandType 枚举值一一对应：
 // UI: 0=群岛, 1=大岛屿, 2=大岛屿群, 3=内陆, 4=山地
 // LandType: 0=Archipelago, 1=Continent, 2=TeamContinent, 3=Inland, 4=Mountainous
-static LandType EnvToLandType(int envIndex)
+static RmLandType EnvToLandType(int envIndex)
 {
     switch (envIndex)
     {
-    case 0: return LandType::Archipelago;
-    case 1: return LandType::Continent;
-    case 2: return LandType::TeamContinent;
-    case 3: return LandType::Inland;
-    case 4: return LandType::Mountainous;
-    default: return LandType::Continent;
+    case 0: return RmLandType::Archipelago;
+    case 1: return RmLandType::Continent;
+    case 2: return RmLandType::TeamContinent;
+    case 3: return RmLandType::Inland;
+    case 4: return RmLandType::Mountainous;
+    default: return RmLandType::Continent;
     }
 }
 
-static const wchar_t* LandTypeStr(LandType lt)
+static const wchar_t* LandTypeStr(RmLandType lt)
 {
     switch (lt)
     {
-    case LandType::Archipelago:   return L"群岛";
-    case LandType::Continent:     return L"大岛屿";
-    case LandType::TeamContinent: return L"大岛屿群";
-    case LandType::Inland:        return L"内陆";
-    case LandType::Mountainous:   return L"山地";
+    case RmLandType::Archipelago:   return L"群岛";
+    case RmLandType::Continent:     return L"大岛屿";
+    case RmLandType::TeamContinent: return L"大岛屿群";
+    case RmLandType::Inland:        return L"内陆";
+    case RmLandType::Mountainous:   return L"山地";
     default: return L"未知";
     }
 }
@@ -502,7 +502,7 @@ static void OnGenerate(HWND hWnd)
     StringCchCopyW(pathText, ARRAYSIZE(pathText), L"未执行");
     if (ok)
     {
-        if (cfg.landType == LandType::Inland || cfg.landType == LandType::Mountainous)
+        if (cfg.landType == RmLandType::Inland || cfg.landType == RmLandType::Mountainous)
         {
             if (rmg.GetWaterAmount() != 0)
             {
@@ -984,6 +984,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
 {
+    // [FA2sp] The standalone tool keeps the original behaviour: read RMGMD.INI
+    // from its own folder. The editor extension leaves both defaults alone.
+    RandomMapGenerator::s_bLoadRmgmdIni = true;
+
     // 进度条控件在 comctl32 里，用之前先初始化
     INITCOMMONCONTROLSEX icc = { sizeof(INITCOMMONCONTROLSEX), ICC_PROGRESS_CLASS };
     InitCommonControlsEx(&icc);

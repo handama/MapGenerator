@@ -350,7 +350,23 @@ static void ParseTmpInto(std::vector<TileCellAttr>& out, const wchar_t* path)
     if (!ok || got != data.size())
         return;
 
-    const unsigned char* base = data.data();
+    RandomMapGenerator::ParseTmpBuffer(out, data.data(),
+                                       static_cast<int>(data.size()));
+}
+
+// ---------------------------------------------------------------------------
+// [FA2sp] ParseTmpBuffer - the same parser, but the bytes come from the caller
+// instead of a file on disk. The editor extension extracts the TMP out of the
+// game MIX (isotem.mix / isosno.mix) and hands the buffer over, so the header
+// layout lives in exactly one place.
+// ---------------------------------------------------------------------------
+void RandomMapGenerator::ParseTmpBuffer(std::vector<TileCellAttr>& out,
+                                        const unsigned char* base, int size)
+{
+    out.clear();
+    if (base == nullptr || size < 16)
+        return;
+
     int cellsInX = 0, cellsInY = 0;
     std::memcpy(&cellsInX, base + 0, 4);
     std::memcpy(&cellsInY, base + 4, 4);
@@ -358,7 +374,7 @@ static void ParseTmpInto(std::vector<TileCellAttr>& out, const wchar_t* path)
         return;
 
     const int count = cellsInX * cellsInY;
-    if (16 + 4 * count > static_cast<int>(data.size()))
+    if (16 + 4 * count > size)
         return;
 
     out.resize(static_cast<size_t>(count));
@@ -370,7 +386,7 @@ static void ParseTmpInto(std::vector<TileCellAttr>& out, const wchar_t* path)
 
         int offset = 0;
         std::memcpy(&offset, base + 16 + 4 * cell, 4);
-        if (offset > 0 && offset + 43 <= static_cast<int>(data.size()))
+        if (offset > 0 && offset + 43 <= size)
         {
             attr.hasFrame    = true;
             attr.flags36     = base[offset + 36];
@@ -381,7 +397,7 @@ static void ParseTmpInto(std::vector<TileCellAttr>& out, const wchar_t* path)
 
             // The frame's two radar pixels (the RA2 image header, 52 bytes).
             // A header that stops before them keeps the zeroed defaults.
-            if (offset + 49 <= static_cast<int>(data.size()))
+            if (offset + 49 <= size)
             {
                 attr.radarRedLeft   = base[offset + 43];
                 attr.radarGreenLeft = base[offset + 44];

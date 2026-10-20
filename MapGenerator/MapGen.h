@@ -27,7 +27,7 @@ constexpr double kUnitScale = 2.3283064370807974e-10;
 //   3 = Inland (special, no 1.2 clamp)
 //   4 = Mountainous (special, no 1.2 clamp)
 // ============================================================================
-enum class LandType : int
+enum class RmLandType : int
 {
     Archipelago   = 0,
     Continent     = 1,
@@ -416,7 +416,7 @@ struct ElevationEntry
 
 struct MapGenConfig
 {
-    LandType   landType;     // this[15]
+    RmLandType  landType;     // this[15]
     int        theater;      // this[14]
     int        timeOfDay;    // this[18]  (0-3)
     int        sizeSlider;   // this[25] = this[26]  (0-3)
@@ -441,6 +441,16 @@ struct MapGenConfig
     // MovementZone table the starting-point stage uses, so it belongs here
     // rather than being rolled inside the generator. See GlobalMapOptions.
     GlobalMapOptions global;
+
+    // [FA2sp] Explicit map extent, in the generator's MapRect form
+    // (W' = visible width + 4, H' = visible height + 12). 0 = derive from
+    // sizeSlider / playerCount as the retail dialog does.
+    //
+    // Needed because CalcMapSize is table-driven and can only produce 74..124,
+    // which cannot cover an arbitrary editor selection when the generator is
+    // used to paint a sub-region of an existing map.
+    int overrideMapWidth = 0;   // W'
+    int overrideMapHeight = 0;  // H'
 };
 
 // ============================================================================
@@ -955,7 +965,54 @@ public:
     bool GenerateMapBody(const MapGenConfig& cfg);
 
     // Re-initialize map data from RMGMD.INI (replicates sub_5981F0)
+    //
+    // [FA2sp] Only reads the file when s_bLoadRmgmdIni is true (default false:
+    // the editor extension feeds the settings from its own dialog instead).
     bool ReInitMapData();
+
+    // [FA2sp] When false, ReInitMapData() just calls settings_.SetDefaults()
+    // and no RMGMD.INI is touched. The standalone tool sets this to true.
+    static bool s_bLoadRmgmdIni;
+
+    // [FA2sp] Folder TEMPERATMD.INI / SNOWMD.INI are read from, with a
+    // trailing backslash. Empty = next to the executable. The host points this
+    // at the game directory so the theater tile families match what FA2 loaded.
+    static std::wstring s_theaterIniDir;
+
+    // [FA2sp] Push the settings collected by the host UI. Must be called before
+    // GenerateMapBody(): RollGlobalOptions already reads VegetationMin/Max.
+    // (The getter already exists further down, next to the other accessors.)
+    void SetSettings(const RMGSettings& s) { settings_ = s; }
+
+    // ---- [FA2sp] host data injection -------------------------------------
+    // When s_bUseHostData is true, GenerateMapBody skips the six Load* passes
+    // (theater INI walk, TMP parsing, rules INI reads) and uses whatever the
+    // host pushed through the setters below. The editor extension feeds FA2's
+    // already-parsed theater/rules tables and TMPs pulled out of the game MIX,
+    // so nothing is loaded from disk at generation time.
+    static bool s_bUseHostData;
+
+    // [FA2sp] Parse one TMP from a memory buffer. Same layout the file loader
+    // uses, so the host can pull the bytes out of a MIX and reuse this parser.
+    // An empty `out` means "no image" - the cell-attribute pass treats it so.
+    static void ParseTmpBuffer(std::vector<TileCellAttr>& out,
+                               const unsigned char* data, int size);
+
+    void SetTileCellAttrs(std::vector<std::vector<TileCellAttr> > v)
+    {
+        tileCellAttrs_.swap(v);
+    }
+    void SetOverlayTypes(std::vector<OverlayTypeInfo> v) { overlayTypes_.swap(v); }
+    void SetGroundTypes(std::vector<GroundTypeInfo> v) { groundTypes_.swap(v); }
+    void SetTiberiums(std::vector<TiberiumInfo> v) { tiberiums_.swap(v); }
+    void SetNeutralTechBuildings(std::vector<NeutralTechBuilding> v)
+    {
+        neutralTechBuildings_.swap(v);
+    }
+    void SetMultiplayerHouses(std::vector<MultiplayerHouse> v)
+    {
+        multiplayerHouses_.swap(v);
+    }
 
     // Theater tile-family indices (IsometricTileTypeClass::ReadINI, 0x545150).
     // Reads the [General] keys ShorePieces / WaterSet / CliffSet / GreenTile /
@@ -1161,7 +1218,7 @@ public:
     bool RelocateStartingPointsLandConnected(int players);
 
     // [port-only] EnsureStartingPointsConnected 的大岛屿群（TeamContinent）专用版，
-    // 只在 LandType::TeamContinent(2) 上使用。这一型**不做陆地连通要求**、也不要求
+    // 只在 RmLandType::TeamContinent(2) 上使用。这一型**不做陆地连通要求**、也不要求
     // 同一高程平面，只有两条规则：①出生点平均分摊到两块最大的陆地上（奇数时排在
     // 前面的岛多一个）；②沿用大岛屿的靠海约束（陆路 kCoastalSteps 步内必须能走到
     // 外海）。岛内仍按几何最远对 + 贪心最远拉开距离。两块岛用与陆路连通版完全相同的
@@ -1259,6 +1316,12 @@ public:
 
     // [TEMP DIAG] Shore bare-contact investigation. Writes one ASCII line to
     // Mapoutput\rmg_diag.log. Remove the whole diagnostic once located.
+    //
+    // [FA2sp] Default OFF. Under the editor extension these calls used to hit
+    // GetModuleFileNameW + CreateDirectoryW + fopen on every one of the 100+
+    // call sites, which is slow and drops rmg_diag.log next to FinalAlert.
+    // Set true only when reproducing a generation bug.
+    static bool s_bDiagLogEnabled;
     static void DiagLog(const char* fmt, ...);
 
     // Step 1 of that stage - sub_594B50 (0x594B50). Picks the regions the
@@ -1654,6 +1717,22 @@ public:
     MapCell* const* GetCellSlots() const { return cellSlots_; }
     int GetSlotRows() const { return slotRows_; }
     int GetCellCount() const { return cellCount_; }
+
+    // [FA2sp] One cell by diamond coordinate, nullptr when outside the map.
+    // cellSlots_ is indexed [row * 512 + x] with row == y.
+    MapCell* GetCellAt(int x, int y) const
+    {
+        if (cellSlots_ == nullptr)
+            return nullptr;
+        if (x < 0 || x > 511 || y < 0 || y >= slotRows_)
+            return nullptr;
+        return cellSlots_[static_cast<size_t>(y) * 512 + static_cast<size_t>(x)];
+    }
+
+    // [FA2sp] Ledgers the .map writer used to read; the editor integration
+    // consumes them straight into CMapData instead.
+    const std::vector<MapStructure>& GetStructures() const { return structures_; }
+    const std::vector<MapTerrainObject>& GetTerrainObjects() const { return terrainObjects_; }
 
     const WorkCell* GetWorkCells() const { return workCells_; }
     int GetWorkCellCount() const { return size_.workSide * size_.workSide; }

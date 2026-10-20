@@ -1594,7 +1594,7 @@ bool RandomMapGenerator::RelocateStartingPointsLandConnected(int players)
     const int visH = size_.height - 8;
     // 大岛屿硬约束：出生点必须能在陆路上 kCoastalSteps 步内走到海边（岛内湖泊
     // /河流不计入）。海图（群岛/大岛屿群）与内陆/山地不加这条。
-    const bool needCoastal = (config_.landType == LandType::Continent);
+    const bool needCoastal = (config_.landType == RmLandType::Continent);
     std::vector<int> coastalDist;
     if (needCoastal)
         coastalDist = BuildCoastalDistance();
@@ -1710,7 +1710,7 @@ bool RandomMapGenerator::RelocateStartingPointsLandConnected(int players)
 }
 
 // ---------------------------------------------------------------------------
-// 大岛屿群（LandType::TeamContinent）专用：两个岛均分出生点。
+// 大岛屿群（RmLandType::TeamContinent）专用：两个岛均分出生点。
 //
 // 这一型与其它地形都不同：**不做陆地连通要求**（"所有出生点彼此陆路可达"只是
 // 内陆、山地、大岛屿的规则），也不要求同一高程平面。只有两条规则：
@@ -1995,7 +1995,7 @@ bool RandomMapGenerator::RelocateStartingPointsTwoIslands(int players)
 // ---------------------------------------------------------------------------
 // RelocateStartingPointsOneIslandEach [port-only]
 //
-// 群岛（LandType::Archipelago）专用：出生点改成"一岛一点"。
+// 群岛（RmLandType::Archipelago）专用：出生点改成"一岛一点"。
 //
 //   * 陆地按陆军口径 4 向泛洪成一块块岛，按格子数从大到小取前 min(玩家人数,
 //     岛数) 块，每块放**恰好一个**出生点；岛数多于玩家人数时多出来的不管。
@@ -2217,7 +2217,7 @@ void RandomMapGenerator::EnsureStartingPointsConnected()
     // [port-only] 群岛（Archipelago）单独一套：一岛一点 —— 取最大的 min(玩家人数,
     // 岛数) 块陆岛各放一个点。不要求靠海、不做陆地连通/同高平面要求。失败时回退。
     const int landType = static_cast<int>(config_.landType);
-    if (landType == static_cast<int>(LandType::Archipelago)
+    if (landType == static_cast<int>(RmLandType::Archipelago)
         && RelocateStartingPointsOneIslandEach(players))
     {
         return;
@@ -2226,7 +2226,7 @@ void RandomMapGenerator::EnsureStartingPointsConnected()
     // [port-only] 大岛屿群（TeamContinent）单独一套：出生点平均分摊到两块最大的
     // 陆地上，**不做陆地连通要求**（"彼此陆路可达"只是内陆/山地/大岛屿的规则），
     // 也不要求同一高程平面；只保留与大岛屿共有的靠海约束。失败时回退旧逻辑。
-    if (landType == static_cast<int>(LandType::TeamContinent)
+    if (landType == static_cast<int>(RmLandType::TeamContinent)
         && RelocateStartingPointsTwoIslands(players))
     {
         return;
@@ -2236,9 +2236,9 @@ void RandomMapGenerator::EnsureStartingPointsConnected()
     // 上，只要彼此可经真实斜坡陆路连通即可（可一个在崖上一个在崖下）。群岛保持
     // 旧的"同一同高平面"机制不变。新版失败时（极小概率：一个陆块里实在凑不齐
     // 全部玩家的 6x6 平地）回退旧逻辑，绝不比旧版差。
-    if ((landType == static_cast<int>(LandType::Continent)
-         || landType == static_cast<int>(LandType::Inland)
-         || landType == static_cast<int>(LandType::Mountainous))
+    if ((landType == static_cast<int>(RmLandType::Continent)
+         || landType == static_cast<int>(RmLandType::Inland)
+         || landType == static_cast<int>(RmLandType::Mountainous))
         && RelocateStartingPointsLandConnected(players))
     {
         return;
@@ -2366,8 +2366,8 @@ void RandomMapGenerator::EnsureStartingPointsConnected()
     // 与陆路版同一圈悬崖缓冲，保证回退到同高平面时也不会把点放到崖边。
     const int kCliffClear = 4;
     // 大岛屿 + 大岛屿群硬约束在回退路径上同样生效：点必须靠海。
-    const bool needCoastal = (config_.landType == LandType::Continent
-                              || config_.landType == LandType::TeamContinent);
+    const bool needCoastal = (config_.landType == RmLandType::Continent
+                              || config_.landType == RmLandType::TeamContinent);
     std::vector<int> coastalDist;
     if (needCoastal)
         coastalDist = BuildCoastalDistance();
