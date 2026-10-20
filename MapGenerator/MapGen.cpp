@@ -384,8 +384,54 @@ bool RandomMapGenerator::s_bDiagLogEnabled = false;
 // [FA2sp] RMGMD.INI is not read unless the standalone tool asks for it.
 bool RandomMapGenerator::s_bLoadRmgmdIni = false;
 
-// [FA2sp] Empty = look for the theater INI next to the executable.
-std::wstring RandomMapGenerator::s_theaterIniDir;
+// [FA2sp] Empty = look for the game INIs next to the executable.
+std::wstring RandomMapGenerator::s_gameIniDir;
+
+// [FA2sp] Single place that decides which copy of rulesmd.ini / artmd.ini /
+// temperatmd.ini the generator reads. Under the editor extension the host sets
+// s_gameIniDir to the game folder, which is exactly where FA2 loaded them from.
+bool RandomMapGenerator::ResolveGameIni(const wchar_t* fileName, wchar_t* out,
+                                        int outSize)
+{
+    if (out == nullptr || outSize <= 0)
+        return false;
+
+    wchar_t dir[MAX_PATH];
+    if (!s_gameIniDir.empty())
+    {
+        wcsncpy_s(dir, MAX_PATH, s_gameIniDir.c_str(), _TRUNCATE);
+    }
+    else
+    {
+        if (GetModuleFileNameW(nullptr, dir, MAX_PATH) == 0)
+            return false;
+        if (wchar_t* slash = wcsrchr(dir, L'\\'))
+            slash[1] = L'\0';
+    }
+
+    // "\u76f8\u5173INI" is the rules-INI folder's name, escaped so this source
+    // file stays pure ASCII.
+    static const wchar_t* const kCandidates[] =
+    {
+        L"%s%s",                                    // the folder itself
+        L"%s..\\%s",
+        L"%s..\\..\\\u76f8\u5173INI\\%s",
+        L"%s\u76f8\u5173INI\\%s",
+    };
+
+    for (int i = 0; i < 4; ++i)
+    {
+        wchar_t path[MAX_PATH];
+        if (swprintf_s(path, kCandidates[i], dir, fileName) < 0)
+            continue;
+        if (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES)
+        {
+            wcsncpy_s(out, static_cast<size_t>(outSize), path, _TRUNCATE);
+            return true;
+        }
+    }
+    return false;
+}
 
 // [FA2sp] When true, the six Load* passes are skipped and the host's tables
 // (pushed through SetTileCellAttrs / SetOverlayTypes / ...) are used instead.
@@ -626,24 +672,26 @@ bool RandomMapGenerator::GenerateMapBody(const MapGenConfig& cfg)
 
     // Theater tile families always come from TEMPERATMD.INI / SNOWMD.INI - the
     // values must match what FA2 loaded, and the file ships loose in the game
-    // folder (s_theaterIniDir points there under the editor).
+    // folder (s_gameIniDir points there under the editor).
     LoadTheaterTiles(cfg.theater);   // IsometricTileTypeClass::ReadINI [General]
 
-    // [FA2sp] With host data the remaining five loaders are skipped entirely:
-    // the caller already pushed the same tables (TMP cell attrs, overlay /
-    // ground / tiberium types, neutral tech buildings, houses).
+    // [FA2sp] The TMP cell attributes are the only table that cannot come from
+    // an INI: the host extracts each TMP out of the game MIX and pushes the
+    // parsed vectors through SetTileCellAttrs(). Everything else below still
+    // reads the game folder through ResolveGameIni().
     if (!s_bUseHostData)
     {
-    // The data the "Recalculating cell attributes" stage reads. LoadTileCellAttrs
-    // needs the tile ranges LoadTheaterTiles just produced; the other three come
-    // from the rules INI and mirror the engine's start-up loads.
-    LoadTileCellAttrs(cfg.theater);
+        // The data the "Recalculating cell attributes" stage reads.
+        // LoadTileCellAttrs needs the tile ranges LoadTheaterTiles just
+        // produced; the other four come from the rules INI.
+        LoadTileCellAttrs(cfg.theater);
+    }
+
     LoadOverlayTypes();              // OverlayTypeClass::LoadFromINI
     LoadGroundTypes();               // GroundType::Array
     LoadTiberiums();                 // TiberiumClass::LoadFromINI
     LoadNeutralTechBuildings();      // RulesClass::NeutralTechBuildings + art
     LoadMultiplayerHouses();         // rules [Countries] for the .yrm [Houses]
-    }
 
     InitCells();
     InitWorkArray();
@@ -2008,9 +2056,12 @@ bool RandomMapGenerator::ReInitMapData()
     // (RMGMinimumTiberium / RMGMaximumTiberium / MaxTrees / vegetation range).
     // Everything else in RMGSettings only fed SaveMapFile's [Lighting] block,
     // which the editor integration does not write.
+    //
+    // Do NOT re-seed the defaults here: the constructor already did, and the
+    // host calls SetSettings() BEFORE GenerateMapBody(), so resetting would
+    // silently drop whatever the dialog collected.
     if (!s_bLoadRmgmdIni)
     {
-        settings_.SetDefaults();
         iniLoaded_ = false;
         return false;
     }

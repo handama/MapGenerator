@@ -3960,25 +3960,11 @@ void RandomMapGenerator::PlaceWaterDetailTile(int tileIndex, int packedCoords,
 // ---------------------------------------------------------------------------
 void RandomMapGenerator::LoadTheaterTiles(int theater)
 {
-    // [FA2sp] s_theaterIniDir lets the host point at the game folder; empty
-    // keeps the standalone behaviour (next to the executable). FA2 loads the
-    // same file into CINI::Temperate / CINI::Snow, so the values match.
-    wchar_t wdir[MAX_PATH];
-    if (!s_theaterIniDir.empty())
-    {
-        wcsncpy_s(wdir, MAX_PATH, s_theaterIniDir.c_str(), _TRUNCATE);
-    }
-    else
-    {
-        GetModuleFileNameW(nullptr, wdir, MAX_PATH);
-        wchar_t* slash = wcsrchr(wdir, L'\\');
-        if (slash)
-            slash[1] = L'\0';
-    }
-
-    wchar_t wpath[MAX_PATH];
-    swprintf_s(wpath, L"%s%s", wdir,
-               theater == 1 ? L"SNOWMD.INI" : L"TEMPERATMD.INI");
+    // [FA2sp] ResolveGameIni() points at the game folder under the editor, so
+    // these are the same values FA2 loaded into CINI::Temperate / CINI::Snow.
+    wchar_t wpath[MAX_PATH] = L"";
+    ResolveGameIni(theater == 1 ? L"snowmd.ini" : L"temperatmd.ini",
+                   wpath, MAX_PATH);
 
     char path[MAX_PATH];
     WideCharToMultiByte(CP_ACP, 0, wpath, -1, path, MAX_PATH, nullptr, nullptr);

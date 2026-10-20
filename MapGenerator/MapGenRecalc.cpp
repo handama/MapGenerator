@@ -95,31 +95,8 @@ void RandomMapGenerator::LoadOverlayTypes()
     overlayTypes_.clear();
 
     // ---- locate the rules INI ---------------------------------------------
-    wchar_t wdir[MAX_PATH];
-    GetModuleFileNameW(nullptr, wdir, MAX_PATH);
-    wchar_t* slash = wcsrchr(wdir, L'\\');
-    if (slash)
-        slash[1] = L'\0';
-
-    // "\u76f8\u5173INI" is the rules-INI folder's name, escaped so this source
-    // file stays pure ASCII.
-    static const wchar_t* const kCandidates[] =
-    {
-        L"%s%s",                                    // next to the executable
-        L"%s..\\%s",
-        L"%s..\\..\\\u76f8\u5173INI\\%s",
-        L"%s\u76f8\u5173INI\\%s",
-    };
-
     wchar_t wpath[MAX_PATH] = L"";
-    bool found = false;
-    for (int i = 0; i < 4 && !found; ++i)
-    {
-        swprintf_s(wpath, kCandidates[i], wdir, L"rulesmd.ini");
-        if (GetFileAttributesW(wpath) != INVALID_FILE_ATTRIBUTES)
-            found = true;
-    }
-    if (!found)
+    if (!ResolveGameIni(L"rulesmd.ini", wpath, MAX_PATH))
         return;
 
     char path[MAX_PATH];
@@ -547,28 +524,8 @@ void RandomMapGenerator::LoadGroundTypes()
     groundTypes_.assign(12, GroundTypeInfo());
 
     // The same rules INI the overlay table comes from.
-    wchar_t wdir[MAX_PATH];
-    GetModuleFileNameW(nullptr, wdir, MAX_PATH);
-    wchar_t* slash = wcsrchr(wdir, L'\\');
-    if (slash)
-        slash[1] = L'\0';
-
-    static const wchar_t* const kCandidates[] =
-    {
-        L"%s%s",                                       // next to the executable
-        L"%s..\\%s",
-        L"%s..\\..\\\u76f8\u5173INI\\%s",               // ...\<rules folder>
-    };
-
     wchar_t wpath[MAX_PATH] = L"";
-    bool found = false;
-    for (int i = 0; i < 3 && !found; ++i)
-    {
-        swprintf_s(wpath, kCandidates[i], wdir, L"rulesmd.ini");
-        if (GetFileAttributesW(wpath) != INVALID_FILE_ATTRIBUTES)
-            found = true;
-    }
-    if (!found)
+    if (!ResolveGameIni(L"rulesmd.ini", wpath, MAX_PATH))
         return;
 
     char path[MAX_PATH];
@@ -628,28 +585,8 @@ void RandomMapGenerator::LoadTiberiums()
     };
 
     // The same rules INI the other tables came from.
-    wchar_t wdir[MAX_PATH];
-    GetModuleFileNameW(nullptr, wdir, MAX_PATH);
-    wchar_t* slash = wcsrchr(wdir, L'\\');
-    if (slash)
-        slash[1] = L'\0';
-
-    static const wchar_t* const kCandidates[] =
-    {
-        L"%s%s",
-        L"%s..\\%s",
-        L"%s..\\..\\\u76f8\u5173INI\\%s",
-    };
-
     wchar_t wpath[MAX_PATH] = L"";
-    bool found = false;
-    for (int i = 0; i < 3 && !found; ++i)
-    {
-        swprintf_s(wpath, kCandidates[i], wdir, L"rulesmd.ini");
-        if (GetFileAttributesW(wpath) != INVALID_FILE_ATTRIBUTES)
-            found = true;
-    }
-    if (!found)
+    if (!ResolveGameIni(L"rulesmd.ini", wpath, MAX_PATH))
         return;
 
     char path[MAX_PATH];

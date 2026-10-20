@@ -974,10 +974,16 @@ public:
     // and no RMGMD.INI is touched. The standalone tool sets this to true.
     static bool s_bLoadRmgmdIni;
 
-    // [FA2sp] Folder TEMPERATMD.INI / SNOWMD.INI are read from, with a
-    // trailing backslash. Empty = next to the executable. The host points this
-    // at the game directory so the theater tile families match what FA2 loaded.
-    static std::wstring s_theaterIniDir;
+    // [FA2sp] Folder holding rulesmd.ini / artmd.ini / temperatmd.ini /
+    // snowmd.ini, with a trailing backslash. Empty = next to the executable.
+    // The host points this at the game directory, which is where FA2 loaded
+    // them from, so every INI lookup resolves to the same file the editor used.
+    static std::wstring s_gameIniDir;
+
+    // Resolve one of the game's INI files. Tries s_gameIniDir first, then the
+    // standalone tool's candidate list (exe folder, one and two levels up, the
+    // project's 相关INI folder). False when none exists.
+    static bool ResolveGameIni(const wchar_t* fileName, wchar_t* out, int outSize);
 
     // [FA2sp] Push the settings collected by the host UI. Must be called before
     // GenerateMapBody(): RollGlobalOptions already reads VegetationMin/Max.

@@ -2836,32 +2836,13 @@ std::vector<CellStruct> RandomMapGenerator::ChooseStartingPointCells(
 // ---------------------------------------------------------------------------
 static bool FindGameIni(const wchar_t* fileName, char* out, int outSize)
 {
-    wchar_t dir[MAX_PATH];
-    GetModuleFileNameW(nullptr, dir, MAX_PATH);
-    if (wchar_t* slash = wcsrchr(dir, L'\\'))
-        slash[1] = L'\0';
-
-    // "\u76f8\u5173INI" is the rules-INI folder's name, escaped so this source
-    // file stays pure ASCII.
-    static const wchar_t* const kCandidates[] =
-    {
-        L"%s%s",                                    // next to the executable
-        L"%s..\\%s",
-        L"%s..\\..\\\u76f8\u5173INI\\%s",
-        L"%s\u76f8\u5173INI\\%s",
-    };
-
-    for (int i = 0; i < 4; ++i)
-    {
-        wchar_t path[MAX_PATH];
-        swprintf_s(path, kCandidates[i], dir, fileName);
-        if (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES)
-        {
-            WideCharToMultiByte(CP_ACP, 0, path, -1, out, outSize, nullptr, nullptr);
-            return true;
-        }
-    }
-    return false;
+    // [FA2sp] One resolver for every INI the generator reads - see
+    // RandomMapGenerator::ResolveGameIni.
+    wchar_t path[MAX_PATH] = L"";
+    if (!RandomMapGenerator::ResolveGameIni(fileName, path, MAX_PATH))
+        return false;
+    WideCharToMultiByte(CP_ACP, 0, path, -1, out, outSize, nullptr, nullptr);
+    return true;
 }
 
 // ---------------------------------------------------------------------------
