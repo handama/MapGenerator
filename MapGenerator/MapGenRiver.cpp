@@ -1894,6 +1894,13 @@ int RandomMapGenerator::TileNeighbourMask(MapCell* cell, int mode)
     const bool selfWater = IsWaterTile(cell);
     const int  base = x + (y * slotStride_);
 
+    // Neighbour offsets are one row up/down in the slot array, so they follow
+    // the row pitch. The retail engine hard-codes 512 and 513 here, which is
+    // only correct while the pitch stays 512 - deriving them from slotStride_
+    // is what keeps the water mask (and therefore the shoreline) right on maps
+    // wider than that.
+    const int step = slotStride_;
+
     auto setBit = [&](int index, int bit)
     {
         MapCell* n = RawSlot(index);
@@ -1901,14 +1908,14 @@ int RandomMapGenerator::TileNeighbourMask(MapCell* cell, int mode)
             mask |= bit;
     };
 
-    setBit(base - 513, 0x40);   // NW
-    setBit(base - 512, 0x80);   // N
-    setBit(base - 511, 0x01);   // NE
-    setBit(base - 1,   0x20);   // W
-    setBit(base + 1,   0x02);   // E
-    setBit(base + 511, 0x10);   // SW
-    setBit(base + 512, 0x08);   // S
-    setBit(base + 513, 0x04);   // SE
+    setBit(base - step - 1, 0x40);   // NW
+    setBit(base - step,     0x80);   // N
+    setBit(base - step + 1, 0x01);   // NE
+    setBit(base - 1,        0x20);   // W
+    setBit(base + 1,        0x02);   // E
+    setBit(base + step - 1, 0x10);   // SW
+    setBit(base + step,     0x08);   // S
+    setBit(base + step + 1, 0x04);   // SE
     return mask;
 }
 
