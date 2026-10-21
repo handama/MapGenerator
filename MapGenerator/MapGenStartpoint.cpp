@@ -2884,7 +2884,7 @@ void RandomMapGenerator::LoadNeutralTechBuildings()
     DiagLog("TECH-DIAG LoadNeutral: rules path='%s'", rulesPath);
 
     char list[512] = "";
-    GetPrivateProfileStringA("AI", "NeutralTechBuildings", "",
+    RmReadString("AI", "NeutralTechBuildings", "",
                              list, sizeof(list), rulesPath);
     DiagLog("TECH-DIAG LoadNeutral: raw list='%s' len=%d",
             list, static_cast<int>(strlen(list)));
@@ -2909,15 +2909,15 @@ void RandomMapGenerator::LoadNeutralTechBuildings()
         if (haveArt)
         {
             char image[64] = "";
-            GetPrivateProfileStringA(name, "Image", "", image,
+            RmReadString(name, "Image", "", image,
                                      sizeof(image), artPath);
 
             char value[32] = "";
             if (image[0] != '\0')
-                GetPrivateProfileStringA(image, "Foundation", "", value,
+                RmReadString(image, "Foundation", "", value,
                                          sizeof(value), artPath);
             if (value[0] == '\0')
-                GetPrivateProfileStringA(name, "Foundation", "", value,
+                RmReadString(name, "Foundation", "", value,
                                          sizeof(value), artPath);
 
             int w = 0;
@@ -2972,14 +2972,14 @@ void RandomMapGenerator::LoadMultiplayerHouses()
         sprintf_s(key, sizeof(key), "%d", index);
 
         char country[64] = "";
-        GetPrivateProfileStringA("Countries", key, "\x01", country,
+        RmReadString("Countries", key, "\x01", country,
                                  sizeof(country), rulesPath);
         if (country[0] == '\0' || country[0] == '\x01')
             break;
 
         MultiplayerHouse house;
         strncpy_s(house.country, country, _TRUNCATE);
-        GetPrivateProfileStringA(country, "Color", "Grey", house.color,
+        RmReadString(country, "Color", "Grey", house.color,
                                  sizeof(house.color), rulesPath);
 
         multiplayerHouses_.push_back(house);

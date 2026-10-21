@@ -3970,121 +3970,117 @@ void RandomMapGenerator::LoadTheaterTiles(int theater)
     WideCharToMultiByte(CP_ACP, 0, wpath, -1, path, MAX_PATH, nullptr, nullptr);
 
     // Section numbers named by [General].
-    const int shoreSection = (int)GetPrivateProfileIntA(
+    const int shoreSection = (int)RmReadInt(
         "General", "ShorePieces", (UINT)-1, path);
-    const int waterSection = (int)GetPrivateProfileIntA(
+    const int waterSection = (int)RmReadInt(
         "General", "WaterSet", (UINT)-1, path);
-    const int cliffSection = (int)GetPrivateProfileIntA(
+    const int cliffSection = (int)RmReadInt(
         "General", "CliffSet", (UINT)-1, path);
-    const int greenTileSection = (int)GetPrivateProfileIntA(
+    const int greenTileSection = (int)RmReadInt(
         "General", "GreenTile", (UINT)-1, path);
-    const int clearToGreenLatSection = (int)GetPrivateProfileIntA(
+    const int clearToGreenLatSection = (int)RmReadInt(
         "General", "ClearToGreenLat", (UINT)-1, path);
-    const int eastSection = (int)GetPrivateProfileIntA(
+    const int eastSection = (int)RmReadInt(
         "General", "WaterfallEast", (UINT)-1, path);
-    const int westSection = (int)GetPrivateProfileIntA(
+    const int westSection = (int)RmReadInt(
         "General", "WaterfallWest", (UINT)-1, path);
-    const int southSection = (int)GetPrivateProfileIntA(
+    const int southSection = (int)RmReadInt(
         "General", "WaterfallSouth", (UINT)-1, path);
-    const int northSection = (int)GetPrivateProfileIntA(
+    const int northSection = (int)RmReadInt(
         "General", "WaterfallNorth", (UINT)-1, path);
-    const int waterCliffsSection = (int)GetPrivateProfileIntA(
+    const int waterCliffsSection = (int)RmReadInt(
         "General", "WaterCliffs", (UINT)-1, path);
-    const int destroyableCliffsSection = (int)GetPrivateProfileIntA(
+    const int destroyableCliffsSection = (int)RmReadInt(
         "General", "DestroyableCliffs", (UINT)-1, path);
-    const int cliffRampsSection = (int)GetPrivateProfileIntA(
+    const int cliffRampsSection = (int)RmReadInt(
         "General", "CliffRamps", (UINT)-1, path);
-    const int waterCavesSection = (int)GetPrivateProfileIntA(
+    const int waterCavesSection = (int)RmReadInt(
         "General", "WaterCaves", (UINT)-1, path);
-    const int bridgeSetSection = (int)GetPrivateProfileIntA(
+    const int bridgeSetSection = (int)RmReadInt(
         "General", "BridgeSet", (UINT)-1, path);
-    const int woodBridgeSetSection = (int)GetPrivateProfileIntA(
+    const int woodBridgeSetSection = (int)RmReadInt(
         "General", "WoodBridgeSet", (UINT)-1, path);
-    const int rampBaseSection = (int)GetPrivateProfileIntA(
+    const int rampBaseSection = (int)RmReadInt(
         "General", "RampBase", (UINT)-1, path);
-    const int slopeSetPiecesSection = (int)GetPrivateProfileIntA(
+    const int slopeSetPiecesSection = (int)RmReadInt(
         "General", "SlopeSetPieces", (UINT)-1, path);
 
     // The rest of the tile-family keys. SetupLAT (sub_47CA80) is the consumer;
     // the ones it does not touch are still read so the table matches ReadINI's.
-    const int rampSmoothSection = (int)GetPrivateProfileIntA(
+    const int rampSmoothSection = (int)RmReadInt(
         "General", "RampSmooth", (UINT)-1, path);
-    const int mmRampBaseSection = (int)GetPrivateProfileIntA(
+    const int mmRampBaseSection = (int)RmReadInt(
         "General", "MMRampBase", (UINT)-1, path);
-    const int clearTileSection = (int)GetPrivateProfileIntA(
+    const int clearTileSection = (int)RmReadInt(
         "General", "ClearTile", (UINT)-1, path);
-    const int roughTileSection = (int)GetPrivateProfileIntA(
+    const int roughTileSection = (int)RmReadInt(
         "General", "RoughTile", (UINT)-1, path);
-    const int sandTileSection = (int)GetPrivateProfileIntA(
+    const int sandTileSection = (int)RmReadInt(
         "General", "SandTile", (UINT)-1, path);
-    const int clearToRoughLatSection = (int)GetPrivateProfileIntA(
+    const int clearToRoughLatSection = (int)RmReadInt(
         "General", "ClearToRoughLat", (UINT)-1, path);
-    const int clearToSandLatSection = (int)GetPrivateProfileIntA(
+    const int clearToSandLatSection = (int)RmReadInt(
         "General", "ClearToSandLat", (UINT)-1, path);
-    const int clearToPaveLatSection = (int)GetPrivateProfileIntA(
+    const int clearToPaveLatSection = (int)RmReadInt(
         "General", "ClearToPaveLat", (UINT)-1, path);
-    const int heightBaseSection = (int)GetPrivateProfileIntA(
+    const int heightBaseSection = (int)RmReadInt(
         "General", "HeightBase", (UINT)-1, path);
-    const int blackTileSection = (int)GetPrivateProfileIntA(
+    const int blackTileSection = (int)RmReadInt(
         "General", "BlackTile", (UINT)-1, path);
-    const int slopeSetPieces2Section = (int)GetPrivateProfileIntA(
+    const int slopeSetPieces2Section = (int)RmReadInt(
         "General", "SlopeSetPieces2", (UINT)-1, path);
-    const int monorailSlopesSection = (int)GetPrivateProfileIntA(
+    const int monorailSlopesSection = (int)RmReadInt(
         "General", "MonorailSlopes", (UINT)-1, path);
-    const int tunnelsSection = (int)GetPrivateProfileIntA(
+    const int tunnelsSection = (int)RmReadInt(
         "General", "Tunnels", (UINT)-1, path);
-    const int trackTunnelsSection = (int)GetPrivateProfileIntA(
+    const int trackTunnelsSection = (int)RmReadInt(
         "General", "TrackTunnels", (UINT)-1, path);
-    const int dirtTunnelsSection = (int)GetPrivateProfileIntA(
+    const int dirtTunnelsSection = (int)RmReadInt(
         "General", "DirtTunnels", (UINT)-1, path);
-    const int dirtTrackTunnelsSection = (int)GetPrivateProfileIntA(
+    const int dirtTrackTunnelsSection = (int)RmReadInt(
         "General", "DirtTrackTunnels", (UINT)-1, path);
-    const int mediansSection = (int)GetPrivateProfileIntA(
+    const int mediansSection = (int)RmReadInt(
         "General", "Medians", (UINT)-1, path);
-    const int roughGroundSection = (int)GetPrivateProfileIntA(
+    const int roughGroundSection = (int)RmReadInt(
         "General", "RoughGround", (UINT)-1, path);
-    const int dirtRoadJunctionSection = (int)GetPrivateProfileIntA(
+    const int dirtRoadJunctionSection = (int)RmReadInt(
         "General", "DirtRoadJunction", (UINT)-1, path);
-    const int dirtRoadCurveSection = (int)GetPrivateProfileIntA(
+    const int dirtRoadCurveSection = (int)RmReadInt(
         "General", "DirtRoadCurve", (UINT)-1, path);
-    const int dirtRoadStraightSection = (int)GetPrivateProfileIntA(
+    const int dirtRoadStraightSection = (int)RmReadInt(
         "General", "DirtRoadStraight", (UINT)-1, path);
-    const int pavedRoadSlopesSection = (int)GetPrivateProfileIntA(
+    const int pavedRoadSlopesSection = (int)RmReadInt(
         "General", "PavedRoadSlopes", (UINT)-1, path);
-    const int dirtRoadSlopesSection = (int)GetPrivateProfileIntA(
+    const int dirtRoadSlopesSection = (int)RmReadInt(
         "General", "DirtRoadSlopes", (UINT)-1, path);
-    const int rocksSection = (int)GetPrivateProfileIntA(
+    const int rocksSection = (int)RmReadInt(
         "General", "Rocks", (UINT)-1, path);
-    const int waterBridgeSection = (int)GetPrivateProfileIntA(
+    const int waterBridgeSection = (int)RmReadInt(
         "General", "WaterBridge", (UINT)-1, path);
     // The four pave families sub_4866D0 / sub_4866F0 / sub_486650 / sub_486670
     // test and sub_58F2C0 stamps with. ReadINI stores their running totals into
     // dword_ABBEC8 / dword_ABBEC4 / dword_AA10A4 / dword_ABC2B0 (0x545eda,
     // 0x545ee9, 0x545d72, 0x545d63).
-    const int pavedRoadsSection = (int)GetPrivateProfileIntA(
+    const int pavedRoadsSection = (int)RmReadInt(
         "General", "PavedRoads", (UINT)-1, path);
-    const int pavedRoadEndsSection = (int)GetPrivateProfileIntA(
+    const int pavedRoadEndsSection = (int)RmReadInt(
         "General", "PavedRoadEnds", (UINT)-1, path);
-    const int miscPaveTileSection = (int)GetPrivateProfileIntA(
+    const int miscPaveTileSection = (int)RmReadInt(
         "General", "MiscPaveTile", (UINT)-1, path);
-    const int paveTileSection = (int)GetPrivateProfileIntA(
+    const int paveTileSection = (int)RmReadInt(
         "General", "PaveTile", (UINT)-1, path);
 
     // Collect every [TileSetNNNN] section with its TilesInSet.
     std::vector<std::pair<int, int> > sets;
-    std::vector<char> sectionNames(64 * 1024, '\0');
-    const DWORD listLen = GetPrivateProfileSectionNamesA(
-        sectionNames.data(), (DWORD)sectionNames.size(), path);
-    if (listLen > 0)
+    std::vector<std::string> sectionNames;
+    RmReadSectionNames(sectionNames, path);
+    for (const std::string& name : sectionNames)
     {
-        for (const char* s = sectionNames.data(); *s; s += std::strlen(s) + 1)
-        {
-            if (_strnicmp(s, "TileSet", 7) != 0)
-                continue;
-            const int section = std::atoi(s + 7);
-            const int tiles = (int)GetPrivateProfileIntA(s, "TilesInSet", 0, path);
-            sets.push_back(std::make_pair(section, tiles));
-        }
+        if (_strnicmp(name.c_str(), "TileSet", 7) != 0)
+            continue;
+        const int section = std::atoi(name.c_str() + 7);
+        const int tiles = RmReadInt(name.c_str(), "TilesInSet", 0, path);
+        sets.push_back(std::make_pair(section, tiles));
     }
     std::sort(sets.begin(), sets.end());
 
@@ -4116,7 +4112,7 @@ void RandomMapGenerator::LoadTheaterTiles(int theater)
             char section[32];
             sprintf_s(section, "TileSet%04d", sets[i].first);
             char value[16] = "";
-            GetPrivateProfileStringA(section, "Morphable", "",
+            RmReadString(section, "Morphable", "",
                                      value, sizeof(value), path);
 
             const char lead = (value[0] != '\0')

@@ -116,6 +116,42 @@ struct FoundationPreviewState
 //   - Unit  : Randomizer::Random_w (0x598000, Next() * 1/(2^32-1))
 //   - Gauss : sub_5980C0 (Marsaglia polar method, second value cached)
 // ============================================================================
+// [FA2sp] Pluggable INI source.
+//
+// The retail build reads RMGMD.INI / rulesmd.ini / artmd.ini / temperatmd.ini
+// from disk with GetPrivateProfile*, which cannot see the copies the editor
+// already parsed out of the game MIX. When the host installs one of these,
+// every INI lookup goes through it instead and no file is touched.
+// ============================================================================
+class RmIniSource
+{
+public:
+    virtual ~RmIniSource() {}
+
+    // [section] key -> int, or `fallback` when absent. `file` is the logical
+    // INI the caller asked for ("rulesmd.ini" / "artmd.ini" /
+    // "temperatmd.ini"): one source object serves them all, so it has to know
+    // which one is meant.
+    virtual int GetInt(const char* file, const char* section, const char* key,
+                       int fallback) const = 0;
+
+    // [section] key -> text. Writes an empty string when absent.
+    virtual void GetString(const char* file, const char* section, const char* key,
+                           char* out, int outSize) const = 0;
+
+    // Every section name of `file`, in any order.
+    virtual void GetSectionNames(const char* file,
+                                 std::vector<std::string>& out) const = 0;
+};
+
+// Free helpers so the call sites stay as terse as the Win32 ones. `path` is
+// only used when no RmIniSource is installed.
+int  RmReadInt(const char* section, const char* key, int fallback, const char* path);
+void RmReadString(const char* section, const char* key, const char* fallback,
+                  char* out, int outSize, const char* path);
+void RmReadSectionNames(std::vector<std::string>& out, const char* path);
+
+// ============================================================================
 class R250Random
 {
 public:
@@ -985,6 +1021,9 @@ public:
     // project's 相关INI folder). False when none exists.
     static bool ResolveGameIni(const wchar_t* fileName, wchar_t* out, int outSize);
 
+    // [FA2sp] When set, all INI reads go through this instead of the disk.
+    static RmIniSource* s_iniSource;
+
     // [FA2sp] Push the settings collected by the host UI. Must be called before
     // GenerateMapBody(): RollGlobalOptions already reads VegetationMin/Max.
     // (The getter already exists further down, next to the other accessors.)
@@ -1746,6 +1785,13 @@ public:
     bool GetRandom25Flag() const { return random25Flag_; }
 
     int GetWaterAmount() const { return waterAmount_; }
+
+    // [FA2sp] Theater tile-family indices, exposed so the host can log them.
+    // All -1 means LoadTheaterTiles found no INI, which makes every stage
+    // stamp garbage tiles.
+    int GetWaterTileIndexDebug() const { return waterTileIndex_; }
+    int GetShorePiecesDebug() const { return shorePieces_; }
+    int GetGreenTileDebug() const { return greenTileIndex_; }
 
     R250Random& RNG() { return rng_; }
 

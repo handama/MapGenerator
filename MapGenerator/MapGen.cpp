@@ -396,6 +396,14 @@ bool RandomMapGenerator::ResolveGameIni(const wchar_t* fileName, wchar_t* out,
     if (out == nullptr || outSize <= 0)
         return false;
 
+    // [FA2sp] With a host INI source there is no file to locate: hand the
+    // logical name back so the read shims know which INI the caller wants.
+    if (s_iniSource != nullptr)
+    {
+        wcsncpy_s(out, static_cast<size_t>(outSize), fileName, _TRUNCATE);
+        return true;
+    }
+
     wchar_t dir[MAX_PATH];
     if (!s_gameIniDir.empty())
     {
@@ -436,6 +444,56 @@ bool RandomMapGenerator::ResolveGameIni(const wchar_t* fileName, wchar_t* out,
 // [FA2sp] When true, the six Load* passes are skipped and the host's tables
 // (pushed through SetTileCellAttrs / SetOverlayTypes / ...) are used instead.
 bool RandomMapGenerator::s_bUseHostData = false;
+
+// [FA2sp] Non-null once the host supplies its parsed INIs.
+RmIniSource* RandomMapGenerator::s_iniSource = nullptr;
+
+// ---------------------------------------------------------------------------
+// [FA2sp] INI read shims. Same argument order as the Win32 calls they replace,
+// so the call sites only had to change name.
+// ---------------------------------------------------------------------------
+int RmReadInt(const char* section, const char* key, int fallback, const char* path)
+{
+    if (RandomMapGenerator::s_iniSource != nullptr)
+        return RandomMapGenerator::s_iniSource->GetInt(path, section, key, fallback);
+    return static_cast<int>(GetPrivateProfileIntA(section, key,
+                                                  static_cast<UINT>(fallback), path));
+}
+
+void RmReadString(const char* section, const char* key, const char* fallback,
+                  char* out, int outSize, const char* path)
+{
+    if (out == nullptr || outSize <= 0)
+        return;
+    out[0] = '\0';
+
+    if (RandomMapGenerator::s_iniSource != nullptr)
+    {
+        RandomMapGenerator::s_iniSource->GetString(path, section, key, out, outSize);
+        return;
+    }
+    GetPrivateProfileStringA(section, key, fallback, out, outSize, path);
+}
+
+void RmReadSectionNames(std::vector<std::string>& out, const char* path)
+{
+    out.clear();
+
+    if (RandomMapGenerator::s_iniSource != nullptr)
+    {
+        RandomMapGenerator::s_iniSource->GetSectionNames(path, out);
+        return;
+    }
+
+    std::vector<char> buffer(256 * 1024, '\0');
+    const DWORD len = GetPrivateProfileSectionNamesA(
+        buffer.data(), static_cast<DWORD>(buffer.size()), path);
+    if (len == 0)
+        return;
+
+    for (const char* name = buffer.data(); *name; name += std::strlen(name) + 1)
+        out.push_back(name);
+}
 
 // 界面选定输出文件夹后、开始生成前调用：规整成带结尾反斜杠的绝对路径，
 // 目录不存在顺手建出来，并同步给静态 DiagLog。
@@ -1991,7 +2049,7 @@ static void ReadIntList(const char* path, const char* key, std::vector<int>& out
 {
     out.clear();
     char buffer[512];
-    DWORD n = GetPrivateProfileStringA("General", key, "", buffer, 512, path);
+    DWORD n = RmReadString("General", key, "", buffer, 512, path);
     if (n == 0)
         return;
 
@@ -2016,7 +2074,7 @@ static void ReadNameList(const char* path, const char* key, std::vector<std::str
 {
     out.clear();
     char buffer[128];
-    DWORD n = GetPrivateProfileStringA("General", key, "", buffer, 128, path);
+    DWORD n = RmReadString("General", key, "", buffer, 128, path);
     if (n == 0)
         return;
 
@@ -2099,9 +2157,9 @@ bool RandomMapGenerator::ReInitMapData()
     settings_.TemperateOrePatchLamps.clear();
     settings_.SnowOrePatchLamps.clear();
 
-    settings_.MinTiberium = (int)GetPrivateProfileIntA(
+    settings_.MinTiberium = (int)RmReadInt(
         "General", "RMGMinimumTiberium", (UINT)settings_.MinTiberium, path);
-    settings_.MaxTiberium = (int)GetPrivateProfileIntA(
+    settings_.MaxTiberium = (int)RmReadInt(
         "General", "RMGMaximumTiberium", (UINT)settings_.MaxTiberium, path);
 
     ReadIntList(path, "RMGLevelLightSettings",    settings_.LevelLightSettings);
@@ -2116,7 +2174,7 @@ bool RandomMapGenerator::ReInitMapData()
     ReadIntList(path, "SnowAmbientGreen",         settings_.SnowAmbientGreen);
     ReadIntList(path, "SnowAmbientBlue",          settings_.SnowAmbientBlue);
 
-    settings_.MaxTrees = (int)GetPrivateProfileIntA(
+    settings_.MaxTrees = (int)RmReadInt(
         "General", "MaxTrees", (UINT)settings_.MaxTrees, path);
 
     ReadNameList(path, "TemperateOrePatchLamps", settings_.TemperateOrePatchLamps);

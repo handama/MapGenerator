@@ -106,7 +106,7 @@ void RandomMapGenerator::LoadOverlayTypes()
     // GetPrivateProfileString with a null key name lists the section's keys,
     // each NUL-terminated, the list closed by an empty string.
     std::vector<char> keys(65536);
-    const DWORD keyBytes = GetPrivateProfileStringA(
+    const DWORD keyBytes = RmReadString(
         "OverlayTypes", nullptr, "", keys.data(),
         static_cast<DWORD>(keys.size()), path);
     if (keyBytes == 0)
@@ -130,7 +130,7 @@ void RandomMapGenerator::LoadOverlayTypes()
             continue;                              // the shipped lists start at 1
 
         char name[64] = "";
-        GetPrivateProfileStringA("OverlayTypes", key, "", name, sizeof(name), path);
+        RmReadString("OverlayTypes", key, "", name, sizeof(name), path);
         if (name[0] == '\0')
             continue;
 
@@ -138,34 +138,34 @@ void RandomMapGenerator::LoadOverlayTypes()
         info.present = true;
 
         char text[64] = "";
-        GetPrivateProfileStringA(name, "Land", "Clear", text, sizeof(text), path);
+        RmReadString(name, "Land", "Clear", text, sizeof(text), path);
         info.landType = ParseLandType(text);       // may be -1, as in vanilla
 
         text[0] = '\0';
-        GetPrivateProfileStringA(name, "Tiberium", "", text, sizeof(text), path);
+        RmReadString(name, "Tiberium", "", text, sizeof(text), path);
         info.tiberium = ParseIniBool(text, false);
 
         text[0] = '\0';
-        GetPrivateProfileStringA(name, "NoUseTileLandType", "", text,
+        RmReadString(name, "NoUseTileLandType", "", text,
                                  sizeof(text), path);
         info.noUseTileLandType = ParseIniBool(text, false);
 
         // The four flags sub_483C80 consults. "Crushable" belongs to the base
         // ObjectTypeClass::LoadFromINI (0x5F92D0), the rest to the overlay's own.
         text[0] = '\0';
-        GetPrivateProfileStringA(name, "Crushable", "", text, sizeof(text), path);
+        RmReadString(name, "Crushable", "", text, sizeof(text), path);
         info.crushable = ParseIniBool(text, false);
 
         text[0] = '\0';
-        GetPrivateProfileStringA(name, "Wall", "", text, sizeof(text), path);
+        RmReadString(name, "Wall", "", text, sizeof(text), path);
         info.wall = ParseIniBool(text, false);
 
         text[0] = '\0';
-        GetPrivateProfileStringA(name, "IsARock", "", text, sizeof(text), path);
+        RmReadString(name, "IsARock", "", text, sizeof(text), path);
         info.isARock = ParseIniBool(text, false);
 
         text[0] = '\0';
-        GetPrivateProfileStringA(name, "IsRubble", "", text, sizeof(text), path);
+        RmReadString(name, "IsRubble", "", text, sizeof(text), path);
         info.isRubble = ParseIniBool(text, false);
 
         // LoadFromINI's fix-up: ore floors that claim Clear really are ore.
@@ -175,7 +175,7 @@ void RandomMapGenerator::LoadOverlayTypes()
 
     // RulesClass::LoadFromINI reads this from [General] (0x66E7xx); the shipped
     // value is 2, which is the only setting that rewrites a floor to Rock.
-    cliffBackImpassability_ = (int)GetPrivateProfileIntA(
+    cliffBackImpassability_ = (int)RmReadInt(
         "General", "CliffBackImpassability", (UINT)-1, path);
 }
 
@@ -438,19 +438,14 @@ void RandomMapGenerator::LoadTileCellAttrs(int theater)
     // ---- [TileSetNNNN] sections in numeric order -------------------------
     std::vector<std::pair<int, int> > sets;            // (section, TilesInSet)
     {
-        std::vector<char> names(64 * 1024, '\0');
-        if (GetPrivateProfileSectionNamesA(names.data(),
-                                           static_cast<DWORD>(names.size()),
-                                           iniPath) > 0)
+        std::vector<std::string> names;
+        RmReadSectionNames(names, iniPath);
+        for (const std::string& name : names)
         {
-            for (const char* s = names.data(); *s; s += std::strlen(s) + 1)
-            {
-                if (_strnicmp(s, "TileSet", 7) != 0)
-                    continue;
-                const int tiles =
-                    (int)GetPrivateProfileIntA(s, "TilesInSet", 0, iniPath);
-                sets.push_back(std::make_pair(std::atoi(s + 7), tiles));
-            }
+            if (_strnicmp(name.c_str(), "TileSet", 7) != 0)
+                continue;
+            const int tiles = RmReadInt(name.c_str(), "TilesInSet", 0, iniPath);
+            sets.push_back(std::make_pair(std::atoi(name.c_str() + 7), tiles));
         }
     }
     std::sort(sets.begin(), sets.end());
@@ -475,7 +470,7 @@ void RandomMapGenerator::LoadTileCellAttrs(int theater)
         char section[32];
         sprintf_s(section, "TileSet%04d", sets[i].first);
         char fileName[64] = "";
-        GetPrivateProfileStringA(section, "FileName", "", fileName,
+        RmReadString(section, "FileName", "", fileName,
                                  sizeof(fileName), iniPath);
 
         if (fileName[0] != '\0')
@@ -539,13 +534,13 @@ void RandomMapGenerator::LoadGroundTypes()
         for (int s = 0; s < 7; ++s)
         {
             char text[64] = "";
-            GetPrivateProfileStringA(section, kSpeedKeys[s], "0", text,
+            RmReadString(section, kSpeedKeys[s], "0", text,
                                      sizeof(text), path);
             gt.cost[s] = ParseIniPercent(text);
         }
 
         char text[64] = "";
-        GetPrivateProfileStringA(section, "Buildable", "", text, sizeof(text), path);
+        RmReadString(section, "Buildable", "", text, sizeof(text), path);
         gt.buildable = ParseIniBool(text, false);
     }
 }
@@ -593,18 +588,18 @@ void RandomMapGenerator::LoadTiberiums()
     WideCharToMultiByte(CP_ACP, 0, wpath, -1, path, MAX_PATH, nullptr, nullptr);
 
     std::vector<char> keys(4096, '\0');
-    if (GetPrivateProfileStringA("Tiberiums", nullptr, "", keys.data(),
+    if (RmReadString("Tiberiums", nullptr, "", keys.data(),
                                  static_cast<DWORD>(keys.size()), path) == 0)
         return;
 
     for (const char* key = keys.data(); *key != '\0'; key += std::strlen(key) + 1)
     {
         char name[64] = "";
-        GetPrivateProfileStringA("Tiberiums", key, "", name, sizeof(name), path);
+        RmReadString("Tiberiums", key, "", name, sizeof(name), path);
         if (name[0] == '\0')
             continue;
 
-        const int image = (int)GetPrivateProfileIntA(name, "Image", -1, path);
+        const int image = (int)RmReadInt(name, "Image", -1, path);
         if (image < 0)
             continue;                              // no Image key: unusable
 
