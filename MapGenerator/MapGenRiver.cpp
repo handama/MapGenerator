@@ -251,7 +251,7 @@ bool RandomMapGenerator::GenerateRiver(int* startXY, double initialAngle,
             if (CellExists(X, Y))
             {
                 WorkCell& wc   = workCells_[X + size_.workSide * Y];
-                MapCell*  cell = cellSlots_[512 * Y + X];
+                MapCell*  cell = cellSlots_[slotStride_ * Y + X];
                 int mark = wc.data[14];   // generation mark, byte 56
 
                 bool carve;
@@ -590,7 +590,7 @@ bool RandomMapGenerator::GenerateRiver(int* startXY, double initialAngle,
                 {
                     if (workCells_[X + size_.workSide * Y].data[14] != genCode_)
                         continue;
-                    MapCell* cell = cellSlots_[512 * Y + X];
+                    MapCell* cell = cellSlots_[slotStride_ * Y + X];
                     if (cell == nullptr)
                         continue;   // non-diamond cell - never marked
                     int tile = cell->IsoTileTypeIndex;
@@ -651,7 +651,7 @@ bool RandomMapGenerator::GenerateRiver(int* startXY, double initialAngle,
             {
                 for (int X = 0; X < size_.workSide; ++X)
                 {
-                    MapCell* cell = cellSlots_[512 * Y + X];
+                    MapCell* cell = cellSlots_[slotStride_ * Y + X];
                     if (cell == nullptr)
                         continue;
                     if (workCells_[X + size_.workSide * Y].data[14] != genCode_)
@@ -756,7 +756,7 @@ bool RandomMapGenerator::RollbackRiver(int genCode, int deltaCount)
             {
                 // Vanilla walks the diamond iterator, so non-diamond cells are
                 // never visited (and never carry a code in the first place).
-                MapCell* cell = cellSlots_[512 * Y + X];
+                MapCell* cell = cellSlots_[slotStride_ * Y + X];
                 if (cell == nullptr)
                     continue;
                 WorkCell& work = workCells_[X + size_.workSide * Y];
@@ -918,7 +918,7 @@ bool RandomMapGenerator::FindCandidateCenter(int genCode, double density,
     {
         for (int X = 0; X < size_.workSide; ++X)
         {
-            if (cellSlots_[512 * Y + X] == nullptr)
+            if (cellSlots_[slotStride_ * Y + X] == nullptr)
                 continue;                            // iterator walks cells
             workCells_[X + size_.workSide * Y].Byte(15) = 0;
         }
@@ -1006,7 +1006,7 @@ bool RandomMapGenerator::FindCandidateCenter(int genCode, double density,
         WorkCell& own = workCells_[cx + size_.workSide * cy];
         if (own.data[14] == 0)                        // 0x5a0d4a
         {
-            MapCell* ownCell = cellSlots_[512 * cy + cx];
+            MapCell* ownCell = cellSlots_[slotStride_ * cy + cx];
             if (IsPlaceholderTile(ownCell))
             {
                 own.Byte(75) = 1;                     // 0x5a0d6a
@@ -1027,7 +1027,7 @@ bool RandomMapGenerator::FindCandidateCenter(int genCode, double density,
             const int  nCode = nw.data[14];
             const bool inRect = (nx >= rect[0] && nx < rect[0] + rect[2] &&
                                  ny >= rect[1] && ny < rect[1] + rect[3]);
-            MapCell*   nCell = cellSlots_[512 * ny + nx];
+            MapCell*   nCell = cellSlots_[slotStride_ * ny + nx];
 
             if (nCode == 0 && nw.Byte(15) != genCode && inRect)
             {
@@ -1198,7 +1198,7 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                 continue;                              // 0x59ea4e
             if (workCells_[x + size_.workSide * y].data[14] != 0)
                 return;                                // 0x59ea6b
-            if (!IsPlaceholderTile(cellSlots_[512 * y + x]))
+            if (!IsPlaceholderTile(cellSlots_[slotStride_ * y + x]))
                 return;                                // 0x59eaca
         }
     }
@@ -1218,7 +1218,7 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                 variant = F2I64((double)(uint32_t)rng_.Next() * 6.0 * kUnitScale);
             }
             while (variant > 5);                       // 0x59eb77
-            MapCell* cell = cellSlots_[512 * y + x];
+            MapCell* cell = cellSlots_[slotStride_ * y + x];
             cell->IsoTileTypeIndex = waterTileIndex_ + variant;   // 0x59eba0
             int height;
             do
@@ -1252,7 +1252,7 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                 {
                     for (int X = 0; X < size_.workSide; ++X)
                     {
-                        MapCell* cell = cellSlots_[512 * Y + X];
+                        MapCell* cell = cellSlots_[slotStride_ * Y + X];
                         if (cell == nullptr)
                             continue;
                         if (workCells_[X + size_.workSide * Y].data[14] == genCode)
@@ -1274,7 +1274,7 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                                             6.0 * kUnitScale);
                         }
                         while (variant > 5);
-                        MapCell* cell = cellSlots_[512 * y + x];
+                        MapCell* cell = cellSlots_[slotStride_ * y + x];
                         cell->IsoTileTypeIndex = waterTileIndex_ + variant;
                         int height;
                         do
@@ -1308,7 +1308,7 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                 {
                     if (!CellExists(x, y))
                         return;
-                    MapCell* cell = cellSlots_[512 * y + x];
+                    MapCell* cell = cellSlots_[slotStride_ * y + x];
                     cell->IsoTileTypeIndex = 0xFFFF;
                     cell->Level += 4;
                     cell->Height = 0;
@@ -1320,13 +1320,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                 {
                 case 0:
                     baseX = bandX - 2;  baseY = bandY - 2;               // 0x59fb4d
-                    level = cellSlots_[512 * (bandY - 4) + (bandX - 2)]->Level;
+                    level = cellSlots_[slotStride_ * (bandY - 4) + (bandX - 2)]->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59fbd6
                     stamp(baseX + waveSpanX + 2, baseY, family + 3, level); // 0x59fc55
-                    cellSlots_[512 * baseY + (baseX + 1)]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[512 * baseY + (baseX + waveSpanX + 2)]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * baseY + (baseX + 1)]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * baseY + (baseX + waveSpanX + 2)]->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveSpanX + 2; ++k)              // 0x59fcdb
-                        cellSlots_[512 * baseY + (baseX + k + 1)]->Level -= 4;
+                        cellSlots_[slotStride_ * baseY + (baseX + k + 1)]->Level -= 4;
                     markCorner(baseX - 1, baseY + 1);                    // 0x59fdba
                     markCorner(baseX + waveSpanX + 4, baseY + 1);        // 0x59fe6b
                     for (int k = 0; k < waveSpanX; )                     // 0x59fef9
@@ -1337,13 +1337,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                     break;
                 case 2:
                     baseX = waveX;      baseY = waveY + waveCountY;      // 0x59eef4
-                    level = cellSlots_[512 * (baseY + 2) + (baseX + 2)]->Level;
+                    level = cellSlots_[slotStride_ * (baseY + 2) + (baseX + 2)]->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59ef7c
                     stamp(baseX, baseY - (waveCountY + 2), family + 3, level); // 0x59eff7
-                    cellSlots_[512 * (baseY - (waveCountY + 3)) + baseX]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[512 * (baseY + 2) + baseX]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * (baseY - (waveCountY + 3)) + baseX]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * (baseY + 2) + baseX]->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveCountY + 2; ++k)             // 0x59f467
-                        cellSlots_[512 * (baseY - k) + baseX]->Level -= 4;
+                        cellSlots_[slotStride_ * (baseY - k) + baseX]->Level -= 4;
                     markCorner(baseX, baseY + 2);                        // 0x59f53e
                     markCorner(baseX + 1, baseY - (waveCountY + 3));     // 0x59f5fb
                     for (int k = 0; k < waveCountY; )                    // 0x59f1d8
@@ -1354,13 +1354,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                     break;
                 case 4:
                     baseX = bandX - 2;  baseY = waveY;                   // 0x59f784
-                    level = cellSlots_[512 * (baseY + 2) + (baseX + 2)]->Level;
+                    level = cellSlots_[slotStride_ * (baseY + 2) + (baseX + 2)]->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59f80c
                     stamp(baseX + waveSpanX + 2, baseY, family + 3, level); // 0x59f88b
-                    cellSlots_[512 * baseY + (baseX - 1)]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[512 * baseY + (baseX + waveSpanX + 4)]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * baseY + (baseX - 1)]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * baseY + (baseX + waveSpanX + 4)]->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveSpanX + 2; ++k)              // 0x59fa30
-                        cellSlots_[512 * baseY + (baseX + k + 1)]->Level -= 4;
+                        cellSlots_[slotStride_ * baseY + (baseX + k + 1)]->Level -= 4;
                     markCorner(baseX - 1, baseY);                        // 0x59f912
                     markCorner(baseX + waveSpanX + 4, baseY);            // 0x59f9c7
                     for (int k = 0; k < waveSpanX; )                     // 0x59fa4b
@@ -1371,13 +1371,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                     break;
                 default: // 6
                     baseX = waveX - 2;  baseY = waveY + waveCountY;      // 0x59f2d5
-                    level = cellSlots_[512 * (baseY + 2) + (baseX - 2)]->Level;
+                    level = cellSlots_[slotStride_ * (baseY + 2) + (baseX - 2)]->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59f362
                     stamp(baseX, baseY - (waveCountY + 2), family + 3, level); // 0x59f3dd
-                    cellSlots_[512 * (baseY + 2) + baseX]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[512 * (baseY - (waveCountY + 2)) + baseX]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * (baseY + 2) + baseX]->IsoTileTypeIndex = 0xFFFF;
+                    cellSlots_[slotStride_ * (baseY - (waveCountY + 2)) + baseX]->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveCountY + 2; ++k)             // 0x59f467
-                        cellSlots_[512 * (baseY - k) + baseX]->Level -= 4;
+                        cellSlots_[slotStride_ * (baseY - k) + baseX]->Level -= 4;
                     markCorner(baseX + 1, baseY + 2);                    // 0x59f53e
                     markCorner(baseX + 1, baseY - (waveCountY + 3));     // 0x59f5fb
                     for (int k = 0; k < waveCountY; )                    // 0x59f690
@@ -1542,7 +1542,7 @@ void RandomMapGenerator::FillStaircaseBends(int genCode)
     {
         if (x < 0 || y < 0 || x >= side || y >= side)
             return false;
-        MapCell* c = cellSlots_[512 * y + x];
+        MapCell* c = cellSlots_[slotStride_ * y + x];
         return c != nullptr && IsWaterTile(c);
     };
 
@@ -1553,7 +1553,7 @@ void RandomMapGenerator::FillStaircaseBends(int genCode)
     {
         for (int x = 0; x < side; ++x)
         {
-            MapCell* a = (CellExists(x, y)) ? cellSlots_[512 * y + x] : nullptr;
+            MapCell* a = (CellExists(x, y)) ? cellSlots_[slotStride_ * y + x] : nullptr;
             if (a == nullptr || IsWaterTile(a))
                 continue;
 
@@ -1564,7 +1564,7 @@ void RandomMapGenerator::FillStaircaseBends(int genCode)
                 realWater(x + 2, y + 1) && realWater(x + 2, y + 2))
             {
                 MapCell* b = (CellExists(x + 1, y + 1))
-                    ? cellSlots_[512 * (y + 1) + (x + 1)] : nullptr;
+                    ? cellSlots_[slotStride_ * (y + 1) + (x + 1)] : nullptr;
                 if (b != nullptr && !IsWaterTile(b))
                     tips.push_back(std::make_pair(x + 1, y + 1));
             }
@@ -1576,7 +1576,7 @@ void RandomMapGenerator::FillStaircaseBends(int genCode)
                 realWater(x - 2, y + 1) && realWater(x - 2, y + 2))
             {
                 MapCell* b = (CellExists(x - 1, y + 1))
-                    ? cellSlots_[512 * (y + 1) + (x - 1)] : nullptr;
+                    ? cellSlots_[slotStride_ * (y + 1) + (x - 1)] : nullptr;
                 if (b != nullptr && !IsWaterTile(b))
                     tips.push_back(std::make_pair(x - 1, y + 1));
             }
@@ -1589,7 +1589,7 @@ void RandomMapGenerator::FillStaircaseBends(int genCode)
         const int ty = tips[k].second;
 
         // Flatten the tip and make it real water of this body.
-        MapCell* tip = cellSlots_[512 * ty + tx];
+        MapCell* tip = cellSlots_[slotStride_ * ty + tx];
         tip->Height = 0;
         tip->IsoTileTypeIndex = waterTileIndex_;
         WorkAt(tx, ty).data[14] = genCode;
@@ -1641,14 +1641,14 @@ void RandomMapGenerator::FillUnsolvableShoreCorners(int genCode)
     {
         if (x < 0 || y < 0 || x >= side || y >= side)
             return false;
-        MapCell* c = cellSlots_[512 * y + x];
+        MapCell* c = cellSlots_[slotStride_ * y + x];
         return c != nullptr && !IsWaterTile(c);
     };
     auto water = [&](int x, int y) -> bool
     {
         if (x < 0 || y < 0 || x >= side || y >= side)
             return false;
-        MapCell* c = cellSlots_[512 * y + x];
+        MapCell* c = cellSlots_[slotStride_ * y + x];
         return c != nullptr && IsWaterTile(c);
     };
 
@@ -1658,7 +1658,7 @@ void RandomMapGenerator::FillUnsolvableShoreCorners(int genCode)
     {
         if (x < 0 || y < 0 || x >= side || y >= side)
             return false;
-        MapCell* c = cellSlots_[512 * y + x];
+        MapCell* c = cellSlots_[slotStride_ * y + x];
         return c != nullptr && IsPlaceholderTile(c);
     };
 
@@ -1731,7 +1731,7 @@ void RandomMapGenerator::FillUnsolvableShoreCorners(int genCode)
     {
         const int fx = fills[k].first;
         const int fy = fills[k].second;
-        MapCell* c = cellSlots_[512 * fy + fx];
+        MapCell* c = cellSlots_[slotStride_ * fy + fx];
         if (c == nullptr)
             continue;
 
@@ -1835,7 +1835,7 @@ void RandomMapGenerator::MarkFoundation(CellStruct baseCell, bool mark)
         if (!CellExists(x, y))
             continue;
 
-        MapCell* cell = cellSlots_[512 * y + x];
+        MapCell* cell = cellSlots_[slotStride_ * y + x];
         if (mark)
             cell->AltFlags |=  AltCellFlags_ContainsBuilding;
         else
@@ -1892,7 +1892,7 @@ int RandomMapGenerator::TileNeighbourMask(MapCell* cell, int mode)
 
     int mask = 0;
     const bool selfWater = IsWaterTile(cell);
-    const int  base = x + (y << 9);
+    const int  base = x + (y * slotStride_);
 
     auto setBit = [&](int index, int bit)
     {
@@ -2856,7 +2856,7 @@ bool RandomMapGenerator::PlaceIsoTile(int lo, int hi, int level, int genCode,
             const int y = cy + row;
             if (!CellExists(x, y))
                 continue;                             // 0x57b516
-            MapCell*  cell = cellSlots_[512 * y + x];
+            MapCell*  cell = cellSlots_[slotStride_ * y + x];
             const int h = col + row * fp->w;          // 0x57b555
 
             // 3. Occupancy preamble (0x57b571 - 0x57b628), driven by the work
@@ -3691,7 +3691,7 @@ bool RandomMapGenerator::ExpandWaterBody(int genCode, int mode, int centerX,
                 WorkCell& work = workCells_[nx + size_.workSide * ny];
                 const int  code = work.data[14];
                 const bool previousGeneration = (flag != 0 && code == genCode - 1);
-                MapCell*   cell = cellSlots_[512 * ny + nx];
+                MapCell*   cell = cellSlots_[slotStride_ * ny + nx];
 
                 if ((code == 0 || previousGeneration) &&
                     (IsPlaceholderTile(cell) ||

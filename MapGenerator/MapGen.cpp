@@ -1930,7 +1930,7 @@ bool RandomMapGenerator::IsPlaceholderTile(const MapCell* cell) const
 // ---------------------------------------------------------------------------
 // CellAt - MapClass::GetCellAt_MapCrd (0x5657AF).
 //
-// The slot index is X + (Y << 9); out-of-range indices and null slots fall
+// The slot index is X + (Y * slotStride_); out-of-range indices and null slots fall
 // back to MapClass::InvalidCell with MapCoords stamped with the requested
 // coords (here invalidCell_). Every in-diamond coordinate resolves to a real
 // cell, so the sentinel is only ever produced for coordinates outside the

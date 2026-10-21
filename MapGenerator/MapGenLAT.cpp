@@ -204,7 +204,7 @@ void RandomMapGenerator::PrepareLATDensities()
 //          u >= +0x18 and u >= +0x28 and u <  +0x20   -> GreenTile
 //          (all three thresholds cleared -> no blob at all)
 //      and place a blob: PlaceBlob(cell, type, F2I64(clip(Gaussian() * span +
-//      centre, [4, 80])), slot = x + (y << 9), false) with span/centre taken
+//      centre, [4, 80])), slot = x + (y * slotStride_), false) with span/centre taken
 //      from the matching n (20 / n, or the 38 / 42 fallback);
 //   4. SetupLAT for every cell;
 //   5. the tree-patch loop (see ScatterTrees);
@@ -344,7 +344,7 @@ void RandomMapGenerator::ScatterLATBlobs()
                 || w.Byte(69) != 0)
                 continue;
 
-            const int slot = x + (y << 9);                // 0x5a3c67
+            const int slot = x + (y * slotStride_);                // 0x5a3c67
 
             if (uniform() >= density18)                   // 0x5a3c88
             {
@@ -518,7 +518,7 @@ void RandomMapGenerator::ResetLATDensityFields()
 //      place a rock blob:
 //          PlaceBlob(cell, roughTileIndex_ /* dword_ABC2B8 */,
 //                    F2I64(clip(Gaussian() * 15.0 + 20.0, [4, 60])),
-//                    x + (y << 9), false);
+//                    x + (y * slotStride_), false);
 //   3. SetupLAT for every cell;
 //   4. the same tree-patch loop as step 2.
 //
@@ -684,7 +684,7 @@ void RandomMapGenerator::ScatterRocks()
 
             // The rocks use RoughTile (dword_ABC2B8). The slot argument is the
             // vanilla's own expression, which carries the y << 16 term too
-            // (sub_5A3AE0's equivalent is the clean x + (y << 9)); harmless,
+            // (sub_5A3AE0's equivalent is the clean x + (y * slotStride_)); harmless,
             // since +0x3C is cleared per call and only compared for equality.
             PlaceBlob(cell, roughTileIndex_, F2I64(size),
                       cell->MapCoords + (static_cast<int>(y) << 9), false,

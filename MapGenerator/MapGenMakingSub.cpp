@@ -1560,7 +1560,7 @@ int RandomMapGenerator::CarveRampAt(MapRegion* owner, CellStruct coords, int reg
             const size_t i = static_cast<size_t>(row) * snapW + col;
             snapHas[i] = 1;
             snapMarks[i] = workCells_[cx + side * cy].data[14];
-            if (MapCell* mc = RawSlot(cx + (cy << 9)))
+            if (MapCell* mc = RawSlot(cx + (cy * slotStride_)))
                 snapCells[i] = *mc;
         }
     }
@@ -1577,7 +1577,7 @@ int RandomMapGenerator::CarveRampAt(MapRegion* owner, CellStruct coords, int reg
                 const int cx = snapX0 + col;
                 const int cy = snapY0 + row;
                 workCells_[cx + side * cy].data[14] = snapMarks[i];
-                if (MapCell* mc = RawSlot(cx + (cy << 9)))
+                if (MapCell* mc = RawSlot(cx + (cy * slotStride_)))
                     *mc = snapCells[i];
             }
         }
@@ -1619,7 +1619,7 @@ int RandomMapGenerator::CarveRampAt(MapRegion* owner, CellStruct coords, int reg
                 const MapCell& oldC = snapCells[i];
                 const int wx = snapX0 + col;
                 const int wy = snapY0 + row;
-                MapCell* nowC = RawSlot(wx + (wy << 9));
+                MapCell* nowC = RawSlot(wx + (wy * slotStride_));
                 if (nowC == nullptr)
                     continue;
 
@@ -1650,7 +1650,7 @@ int RandomMapGenerator::CarveRampAt(MapRegion* owner, CellStruct coords, int reg
                     const size_t qi = static_cast<size_t>(qr) * snapW + qc;
                     if (!snapHas[qi])
                         break;
-                    MapCell* qNow = RawSlot(qx + (qy << 9));
+                    MapCell* qNow = RawSlot(qx + (qy * slotStride_));
                     if (qNow == nullptr)
                         break;
                     const MapCell& qOld = snapCells[qi];
