@@ -1457,7 +1457,7 @@ bool RandomMapGenerator::SmoothWaterBody(int genCode, int flag)
     // Pass 1: recursive flood fill of the water body.
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (!ok)
@@ -1470,7 +1470,7 @@ bool RandomMapGenerator::SmoothWaterBody(int genCode, int flag)
     // Pass 2: placeholder tile cleanup (return value deliberately ignored).
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (!ok)
@@ -1494,7 +1494,7 @@ bool RandomMapGenerator::SmoothWaterBody(int genCode, int flag)
     // Pass 3: shore tile selection, first round.
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (!ok)
@@ -1507,7 +1507,7 @@ bool RandomMapGenerator::SmoothWaterBody(int genCode, int flag)
     // Pass 4: shore tile selection, second round - its result is the return.
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (!ok)
@@ -3743,7 +3743,7 @@ bool RandomMapGenerator::ExpandWaterBody(int genCode, int mode, int centerX,
 void RandomMapGenerator::DecorateWaterTiles()
 {
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         // Plain open water only: WaterSet base tile, flat (Height 0).

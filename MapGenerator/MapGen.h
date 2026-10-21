@@ -299,18 +299,23 @@ struct WorkCell
 class CellIterator
 {
 public:
-    CellIterator() : slots_(nullptr), mapWidth_(0)
+    CellIterator() : slots_(nullptr), mapWidth_(0), stride_(512)
         , nextX_(0), nextY_(0), currentY_(0), slotIndex_(0) {}
 
-    // Replicates sub_578350
-    void Reset(MapCell* const* slots, int mapWidth)
+    // Replicates sub_578350.
+    //
+    // `stride` is the row pitch of the slot array. The retail engine hard-codes
+    // 512; this port sizes the array from the map (W'+H'+1) so maps wider than
+    // 512 cells can be generated too.
+    void Reset(MapCell* const* slots, int mapWidth, int stride = 512)
     {
         slots_ = slots;
         mapWidth_ = mapWidth;
+        stride_ = stride;
         nextX_ = 1;
         nextY_ = mapWidth;
         currentY_ = mapWidth - 1;
-        slotIndex_ = 512 * mapWidth + 1;
+        slotIndex_ = stride_ * mapWidth + 1;
     }
 
     // Replicates MapClass::CellIteratorNext; returns nullptr when done
@@ -323,7 +328,7 @@ public:
             nextY_ -= 1;
             nextX_ += 1;
             currentY_ = curY - 1;
-            slotIndex_ = oldSlot - 511;
+            slotIndex_ = oldSlot - (stride_ - 1);
         }
         else
         {
@@ -341,7 +346,7 @@ public:
                 currentY_ = mapWidth_ - 2;
                 nextX_ = ny + 1;
             }
-            slotIndex_ = nextX_ + (nextY_ << 9);
+            slotIndex_ = nextX_ + nextY_ * stride_;
         }
         return slots_[oldSlot];
     }
@@ -349,6 +354,7 @@ public:
 private:
     MapCell* const* slots_;
     int mapWidth_;
+    int stride_;
     int nextX_;
     int nextY_;
     int currentY_;
@@ -1770,14 +1776,16 @@ public:
     int GetCellCount() const { return cellCount_; }
 
     // [FA2sp] One cell by diamond coordinate, nullptr when outside the map.
-    // cellSlots_ is indexed [row * 512 + x] with row == y.
+    // cellSlots_ is a [y * slotStride_ + x] array; the retail engine pins the
+    // stride at 512, this port sizes it from the map so w+h can exceed 512.
     MapCell* GetCellAt(int x, int y) const
     {
         if (cellSlots_ == nullptr)
             return nullptr;
-        if (x < 0 || x > 511 || y < 0 || y >= slotRows_)
+        if (x < 0 || x >= slotStride_ || y < 0 || y >= slotRows_)
             return nullptr;
-        return cellSlots_[static_cast<size_t>(y) * 512 + static_cast<size_t>(x)];
+        return cellSlots_[static_cast<size_t>(y) * static_cast<size_t>(slotStride_)
+                          + static_cast<size_t>(x)];
     }
 
     // [FA2sp] Ledgers the .map writer used to read; the editor integration
@@ -2249,8 +2257,9 @@ private:
     GlobalMapOptions globalOptions_;
 
     MapCell*  cellPool_;    // allocated CellClass objects (diamond cells)
-    MapCell** cellSlots_;   // 512-stride pointer array with nullptr sentinel
+    MapCell** cellSlots_;   // row-major pointer array with nullptr sentinel
     int       slotRows_;    // slot array height (W' + H' + 1)
+    int       slotStride_;  // row pitch, == slotRows_ (retail hard-codes 512)
     int       cellCount_;   // number of diamond cells
 
     WorkCell* workCells_;

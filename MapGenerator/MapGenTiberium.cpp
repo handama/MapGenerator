@@ -349,7 +349,7 @@ void RandomMapGenerator::GrowTiberiumField(CellStruct seed, int target,
             heap.push_back(-1);
 
             CellIterator it;
-            it.Reset(cellSlots_, size_.mapWidth);
+            it.Reset(cellSlots_, size_.mapWidth, slotStride_);
             while (MapCell* c = it.Next())                      // 0x5a29e4
             {
                 const int x = c->MapCoords & 0xFFFF;

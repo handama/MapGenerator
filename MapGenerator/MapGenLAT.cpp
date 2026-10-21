@@ -150,7 +150,7 @@ void RandomMapGenerator::PrepareLATDensities()
     const int side = size_.workSide;
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);                  // 0x5a38d4
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);                  // 0x5a38d4
     while (MapCell* cell = it.Next())
     {
         const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -255,7 +255,7 @@ void RandomMapGenerator::ScatterLATBlobs()
     // 0x5a3af8 - 0x5a3b35.
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -320,7 +320,7 @@ void RandomMapGenerator::ScatterLATBlobs()
     // IsoTileTypeIndex_1` = greenTileIndex_, so the third is the GREEN tile.
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -368,7 +368,7 @@ void RandomMapGenerator::ScatterLATBlobs()
     // ---- 4. SetupLAT refresh (0x5a3f19 - 0x5a3f2e) ------------------------
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
             SetupLAT(cell);
     }
@@ -490,7 +490,7 @@ void RandomMapGenerator::ResetLATDensityFields()
     const int side = size_.workSide;
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);                  // 0x59923e sub_578350
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);                  // 0x59923e sub_578350
     while (MapCell* cell = it.Next())                      // 0x599248
     {
         const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -634,7 +634,7 @@ void RandomMapGenerator::ScatterRocks()
     // 0x5a4298 - 0x5a42d5.
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -647,7 +647,7 @@ void RandomMapGenerator::ScatterRocks()
     // ---- 2. the rock pass (0x5a42e7 - 0x5a43e6) ---------------------------
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -695,7 +695,7 @@ void RandomMapGenerator::ScatterRocks()
     // ---- 3. SetupLAT refresh (0x5a43f5 - 0x5a440a) ------------------------
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
             SetupLAT(cell);
     }
@@ -1198,7 +1198,7 @@ void RandomMapGenerator::PruneTerrainTrees()
     {
         int clearedOverlay = 0;
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if ((cell->AltFlags & AltCellFlags_ContainsBuilding) != 0

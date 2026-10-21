@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // MapGenRegion.cpp - region subsystem of the random map generator
 //
 //   InitRegions                sub_598960 @ 0x598C24   stage body
@@ -397,7 +397,7 @@ MapRegion* RandomMapGenerator::BuildRegionFromCell(MapCell* cell)
                 const int handLevel = CellAt(cx, cy)->Level;              // 0x58cd6d
 
                 CellIterator it;                     // 0x58cd79
-                it.Reset(cellSlots_, size_.mapWidth);
+                it.Reset(cellSlots_, size_.mapWidth, slotStride_);
                 while (MapCell* c = it.Next())
                 {
                     const int16_t x = static_cast<int16_t>(c->MapCoords & 0xFFFF);
@@ -450,7 +450,7 @@ MapRegion* RandomMapGenerator::BuildRegionFromCell(MapCell* cell)
                 handedOver = true;                   // 0x58cc6e
 
                 CellIterator it;                     // 0x58cbf6
-                it.Reset(cellSlots_, size_.mapWidth);
+                it.Reset(cellSlots_, size_.mapWidth, slotStride_);
                 while (MapCell* c = it.Next())
                 {
                     const int16_t x = static_cast<int16_t>(c->MapCoords & 0xFFFF);
@@ -641,7 +641,7 @@ std::vector<CellStruct> RandomMapGenerator::CollectRegionBoundary(MapRegion* reg
     const int side = size_.workSide;
 
     CellIterator it;                                 // 0x58d458
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())                // 0x58d467 / 0x58d57d
     {
         const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);

@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // MapGenHills.cpp - the "RMG: Creating hills" stage
 // (sub_598960 @ 0x599171 - 0x599214) and its driver sub_5A35F0.
 //
@@ -118,7 +118,7 @@ void RandomMapGenerator::MarkTechBuildingProtection()
     int marked = 0;
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         if ((cell->AltFlags & AltCellFlags_ContainsBuilding) == 0)
@@ -173,7 +173,7 @@ void RandomMapGenerator::MarkHillProtection()
     static const int16_t kDirY[8] = { -1, -1,  0,  1,  1,  1,  0, -1 };
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -901,7 +901,7 @@ void RandomMapGenerator::FinalizeElevationSlopes()
         return;
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);                 // 0x6b3858
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);                 // 0x6b3858
     while (MapCell* cell = it.Next())
     {
         const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -1049,7 +1049,7 @@ void RandomMapGenerator::MergeSlopeBlocks()
     static const int kExpected11[4] = { 11, 12, 9, 10 };
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);                 // 0x5a36cb
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);                 // 0x5a36cb
     while (MapCell* cell = it.Next())
     {
         const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -1171,7 +1171,7 @@ void RandomMapGenerator::RemoveCliffsOverRamps()
     std::vector<Piece> pieces;
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         const int t = cell->IsoTileTypeIndex;

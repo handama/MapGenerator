@@ -837,7 +837,7 @@ bool RandomMapGenerator::SelectStartingPointRegions()
         int diagPassable = 0;
         int diagMatchErr = 0;
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -871,7 +871,7 @@ bool RandomMapGenerator::SelectStartingPointRegions()
         int errOther = 0;
         int errOtherVals[16] = { 0 };
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -1146,7 +1146,7 @@ bool RandomMapGenerator::SelectStartingPointRegions()
         // 放宽播种：只要求在菱形内、无标记、纯可通行（flood 同样忽略移动分量）
         {
             CellIterator it;
-            it.Reset(cellSlots_, size_.mapWidth);
+            it.Reset(cellSlots_, size_.mapWidth, slotStride_);
             while (MapCell* cell = it.Next())
             {
                 const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);
@@ -1320,7 +1320,7 @@ std::vector<int> RandomMapGenerator::BuildCoastalDistance()
 
     // ---- 1. 外海泛洪（只走水格，且必须贴着地图外圈 OutsideMap）-------------
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         if (cell->Passability != PassabilityType_Water)
@@ -1384,7 +1384,7 @@ std::vector<int> RandomMapGenerator::BuildCoastalDistance()
     };
 
     CellIterator seedIt;
-    seedIt.Reset(cellSlots_, size_.mapWidth);
+    seedIt.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = seedIt.Next())
     {
         const int x = cell->MapCoords & 0xFFFF;
@@ -3263,7 +3263,7 @@ bool RandomMapGenerator::PaintStartingPointTerrain()
         // ---- clear every diamond cell's start mark ------------------------
         {
             CellIterator it;
-            it.Reset(cellSlots_, size_.mapWidth);
+            it.Reset(cellSlots_, size_.mapWidth, slotStride_);
             while (MapCell* cell = it.Next())
             {
                 const int16_t x = static_cast<int16_t>(cell->MapCoords & 0xFFFF);

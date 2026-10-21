@@ -291,6 +291,7 @@ RandomMapGenerator::RandomMapGenerator()
     , cellPool_(nullptr)
     , cellSlots_(nullptr)
     , slotRows_(0)
+    , slotStride_(512)
     , cellCount_(0)
     , workCells_(nullptr)
     , random25Flag_(false)
@@ -586,8 +587,13 @@ void RandomMapGenerator::InitCells()
     // Rows cover every diagonal the iterator can touch (incl. the
     // out-of-diamond probe cell that terminates iteration)
     slotRows_ = size_.mapWidth + size_.mapHeight + 1;
-    cellSlots_ = new MapCell*[slotRows_ * 512];
-    std::memset(cellSlots_, 0, sizeof(MapCell*) * slotRows_ * 512);
+
+    // Row pitch. The retail engine uses 512 unconditionally; sizing it from the
+    // map lets w+h exceed 512 (the editor supports up to 2048).
+    slotStride_ = slotRows_;
+
+    cellSlots_ = new MapCell*[static_cast<size_t>(slotRows_) * slotStride_];
+    std::memset(cellSlots_, 0, sizeof(MapCell*) * static_cast<size_t>(slotRows_) * slotStride_);
 
     // x spans [1, W'+H'-1] inside the diamond (x = 0 has no solution)
     int maxX = size_.mapWidth + size_.mapHeight - 1;
@@ -615,7 +621,7 @@ void RandomMapGenerator::InitCells()
             cell.OverlayTypeIndex = -1;
             cell.OverlayData = 0;
             cell.AltFlags = 0;
-            cellSlots_[512 * y + x] = &cellPool_[idx];
+            cellSlots_[static_cast<size_t>(slotStride_) * y + x] = &cellPool_[idx];
             ++idx;
         }
     }
@@ -672,7 +678,7 @@ void RandomMapGenerator::FillWorkCoords()
         return;
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         int x = cell->MapCoords & 0xFFFF;
@@ -792,7 +798,7 @@ void RandomMapGenerator::GenerateTerrain()
 {
     // Segment 1: flood with water
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
         cell->IsoTileTypeIndex = waterTileIndex_;
 
@@ -815,7 +821,7 @@ void RandomMapGenerator::GenerateTerrain()
     // Segment 3 (0x59a722 - 0x59a770): a water cell whose four orthogonal
     // neighbours all carry no real tile is a one-cell hole - make it land.
     CellIterator holeIt;
-    holeIt.Reset(cellSlots_, size_.mapWidth);
+    holeIt.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = holeIt.Next())
     {
         if (cell->IsoTileTypeIndex != waterTileIndex_)            // 0x59a741
@@ -859,7 +865,7 @@ void RandomMapGenerator::GenerateTerrain()
     // still has bare neighbours stamps those neighbours with the green ground
     // tile, so the land behind the shore is not left as a placeholder.
     CellIterator greenIt;
-    greenIt.Reset(cellSlots_, size_.mapWidth);
+    greenIt.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = greenIt.Next())
     {
         const int tile = cell->IsoTileTypeIndex;
@@ -888,7 +894,7 @@ void RandomMapGenerator::GenerateTerrain()
 void RandomMapGenerator::ClearWorkOccupancy()
 {
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         int x = cell->MapCoords & 0xFFFF;
@@ -1186,7 +1192,7 @@ void RandomMapGenerator::GenerateContinent()
             int bestX = 0;                              // 0x59b149 (MapCoords = 0)
             int bestY = 0;
             CellIterator it;                             // 0x59b15f
-            it.Reset(cellSlots_, size_.mapWidth);
+            it.Reset(cellSlots_, size_.mapWidth, slotStride_);
             while (MapCell* cell = it.Next())
             {
                 const int x = cell->MapCoords & 0xFFFF;
@@ -1687,7 +1693,7 @@ int RandomMapGenerator::GrowPatch(int area, const MapRectTag* bounds,
     const bool smoothed = SmoothWaterBody(genCode_, 1);     // 0x59c43d
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (cell->IsoTileTypeIndex >= shorePieces_ &&
@@ -1708,7 +1714,7 @@ int RandomMapGenerator::GrowPatch(int area, const MapRectTag* bounds,
     }
 
     CellIterator rollback;
-    rollback.Reset(cellSlots_, size_.mapWidth);
+    rollback.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = rollback.Next())
     {
         const int x = cell->MapCoords & 0xFFFF;
@@ -1932,8 +1938,8 @@ bool RandomMapGenerator::IsPlaceholderTile(const MapCell* cell) const
 // ---------------------------------------------------------------------------
 MapCell* RandomMapGenerator::CellAt(int x, int y)
 {
-    const int index = x + (y << 9);
-    if (index >= 0 && index < slotRows_ * 512 && cellSlots_[index])
+    const int index = x + y * slotStride_;
+    if (index >= 0 && index < slotRows_ * slotStride_ && cellSlots_[index])
         return cellSlots_[index];
 
     invalidCell_.MapCoords = (static_cast<int>(static_cast<int16_t>(x)) & 0xFFFF)
@@ -1949,7 +1955,7 @@ MapCell* RandomMapGenerator::CellAt(int x, int y)
 // ---------------------------------------------------------------------------
 MapCell* RandomMapGenerator::RawSlot(int index)
 {
-    if (index < 0 || index >= slotRows_ * 512)
+    if (index < 0 || index >= slotRows_ * slotStride_)
         return nullptr;
     return cellSlots_[index];
 }

@@ -146,7 +146,7 @@ void RandomMapGenerator::ClearPreviousGeneration(int genCode, int rings,
     if (clearVisited)
     {
         CellIterator it;                                      // 0x5a043b
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int x = cell->MapCoords & 0xFFFF;
@@ -202,7 +202,7 @@ void RandomMapGenerator::ClearPreviousGeneration(int genCode, int rings,
     if (clearVisited)                                         // 0x5a0696
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int x = cell->MapCoords & 0xFFFF;
@@ -266,7 +266,7 @@ bool RandomMapGenerator::GenerateLake(int* startXY)
     // Iterator order; byte 60 = WorkCell data[15].
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             const int x = cell->MapCoords & 0xFFFF;
@@ -533,7 +533,7 @@ bool RandomMapGenerator::GenerateLake(int* startXY)
             if (ExpandWaterBody(genCode, 1, 0, 0, 512, 512, 0, 0))  // 0x59d32a
             {
                 CellIterator it;
-                it.Reset(cellSlots_, size_.mapWidth);
+                it.Reset(cellSlots_, size_.mapWidth, slotStride_);
                 while (MapCell* c = it.Next())
                 {
                     WorkCell& w = WorkAt(c->MapCoords & 0xFFFF,
@@ -568,7 +568,7 @@ bool RandomMapGenerator::GenerateLake(int* startXY)
     // Undo every cell this attempt stamped, back to plain land.
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* c = it.Next())
         {
             WorkCell& w = WorkAt(c->MapCoords & 0xFFFF,

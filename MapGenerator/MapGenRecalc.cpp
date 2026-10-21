@@ -1161,7 +1161,7 @@ void RandomMapGenerator::RecalculateCellAttributes()
         return;
 
     CellIterator it;
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
         RecalcAttributes(cell, -1);
 }

@@ -737,7 +737,7 @@ bool RandomMapGenerator::SplitOrDropRegion(MapRegion* region)
                     nr->id, nr->cellCount, oldLevel, best->id, bestLevel, delta);
 
             CellIterator it;                               // 0x58e427
-            it.Reset(cellSlots_, size_.mapWidth);
+            it.Reset(cellSlots_, size_.mapWidth, slotStride_);
             while (MapCell* c = it.Next())                 // 0x58e3cc
             {
                 const int16_t x = static_cast<int16_t>(c->MapCoords & 0xFFFF);
@@ -790,7 +790,7 @@ bool RandomMapGenerator::SplitOrDropRegion(MapRegion* region)
             }
 
             CellIterator it;                               // 0x58e3bd
-            it.Reset(cellSlots_, size_.mapWidth);
+            it.Reset(cellSlots_, size_.mapWidth, slotStride_);
             while (MapCell* c = it.Next())                 // 0x58e3ce
             {
                 const int16_t x = static_cast<int16_t>(c->MapCoords & 0xFFFF);
@@ -885,7 +885,7 @@ void RandomMapGenerator::ReseedRegions()
     bool pass = true;                                 // vanilla v15 (0x58ef1e)
     {
         CellIterator it;                              // 0x58ef2d sub_578350
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())             // 0x58ef37 CellIteratorNext
         {
             if (!pass)                                // 0x58ef43
@@ -4117,7 +4117,7 @@ void RandomMapGenerator::FixCliffLevels()
     };
 
     CellIterator it;                                      // 0x5a19e9 sub_578350
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())                     // 0x5a19f3
     {
         MapCell* southWest = GetNeighbourCell(cell, 5);   // 0x5a1a12
@@ -4208,7 +4208,7 @@ void RandomMapGenerator::PlaceCliffs()
     // ---- 4. Pass 1: fill the depressions (sub_579010) ---------------------
     {
         CellIterator it;                                  // sub_578350
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (!pass)
@@ -4220,7 +4220,7 @@ void RandomMapGenerator::PlaceCliffs()
     // ---- 5. Pass 2: one cliff piece per placeholder cell (sub_579620) -----
     {
         CellIterator it;
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (!pass)
@@ -4556,7 +4556,7 @@ void RandomMapGenerator::CorrectCliffTiles()
     };
 
     CellIterator it;                                      // sub_578350
-    it.Reset(cellSlots_, size_.mapWidth);
+    it.Reset(cellSlots_, size_.mapWidth, slotStride_);
     while (MapCell* cell = it.Next())
     {
         const int tile = cell->IsoTileTypeIndex;
@@ -4611,7 +4611,7 @@ void RandomMapGenerator::FillGreenPlaceholders()
     // ---- 1. Seed the list from the green-ground cells ---------------------
     {
         CellIterator it;                                  // 0x59b7xx sub_578350
-        it.Reset(cellSlots_, size_.mapWidth);
+        it.Reset(cellSlots_, size_.mapWidth, slotStride_);
         while (MapCell* cell = it.Next())
         {
             if (!IsGreenGroundTile(cell))                 // sub_4867B0
