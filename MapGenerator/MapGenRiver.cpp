@@ -1320,13 +1320,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                 {
                 case 0:
                     baseX = bandX - 2;  baseY = bandY - 2;               // 0x59fb4d
-                    level = cellSlots_[slotStride_ * (bandY - 4) + (bandX - 2)]->Level;
+                    level = SlotOrInvalid(slotStride_ * (bandY - 4) + (bandX - 2))->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59fbd6
                     stamp(baseX + waveSpanX + 2, baseY, family + 3, level); // 0x59fc55
-                    cellSlots_[slotStride_ * baseY + (baseX + 1)]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[slotStride_ * baseY + (baseX + waveSpanX + 2)]->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * baseY + (baseX + 1))->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * baseY + (baseX + waveSpanX + 2))->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveSpanX + 2; ++k)              // 0x59fcdb
-                        cellSlots_[slotStride_ * baseY + (baseX + k + 1)]->Level -= 4;
+                        SlotOrInvalid(slotStride_ * baseY + (baseX + k + 1))->Level -= 4;
                     markCorner(baseX - 1, baseY + 1);                    // 0x59fdba
                     markCorner(baseX + waveSpanX + 4, baseY + 1);        // 0x59fe6b
                     for (int k = 0; k < waveSpanX; )                     // 0x59fef9
@@ -1337,13 +1337,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                     break;
                 case 2:
                     baseX = waveX;      baseY = waveY + waveCountY;      // 0x59eef4
-                    level = cellSlots_[slotStride_ * (baseY + 2) + (baseX + 2)]->Level;
+                    level = SlotOrInvalid(slotStride_ * (baseY + 2) + (baseX + 2))->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59ef7c
                     stamp(baseX, baseY - (waveCountY + 2), family + 3, level); // 0x59eff7
-                    cellSlots_[slotStride_ * (baseY - (waveCountY + 3)) + baseX]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[slotStride_ * (baseY + 2) + baseX]->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * (baseY - (waveCountY + 3)) + baseX)->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * (baseY + 2) + baseX)->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveCountY + 2; ++k)             // 0x59f467
-                        cellSlots_[slotStride_ * (baseY - k) + baseX]->Level -= 4;
+                        SlotOrInvalid(slotStride_ * (baseY - k) + baseX)->Level -= 4;
                     markCorner(baseX, baseY + 2);                        // 0x59f53e
                     markCorner(baseX + 1, baseY - (waveCountY + 3));     // 0x59f5fb
                     for (int k = 0; k < waveCountY; )                    // 0x59f1d8
@@ -1354,13 +1354,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                     break;
                 case 4:
                     baseX = bandX - 2;  baseY = waveY;                   // 0x59f784
-                    level = cellSlots_[slotStride_ * (baseY + 2) + (baseX + 2)]->Level;
+                    level = SlotOrInvalid(slotStride_ * (baseY + 2) + (baseX + 2))->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59f80c
                     stamp(baseX + waveSpanX + 2, baseY, family + 3, level); // 0x59f88b
-                    cellSlots_[slotStride_ * baseY + (baseX - 1)]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[slotStride_ * baseY + (baseX + waveSpanX + 4)]->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * baseY + (baseX - 1))->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * baseY + (baseX + waveSpanX + 4))->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveSpanX + 2; ++k)              // 0x59fa30
-                        cellSlots_[slotStride_ * baseY + (baseX + k + 1)]->Level -= 4;
+                        SlotOrInvalid(slotStride_ * baseY + (baseX + k + 1))->Level -= 4;
                     markCorner(baseX - 1, baseY);                        // 0x59f912
                     markCorner(baseX + waveSpanX + 4, baseY);            // 0x59f9c7
                     for (int k = 0; k < waveSpanX; )                     // 0x59fa4b
@@ -1371,13 +1371,13 @@ void RandomMapGenerator::GenerateDelta(int genCode, int startXY, int endXY,
                     break;
                 default: // 6
                     baseX = waveX - 2;  baseY = waveY + waveCountY;      // 0x59f2d5
-                    level = cellSlots_[slotStride_ * (baseY + 2) + (baseX - 2)]->Level;
+                    level = SlotOrInvalid(slotStride_ * (baseY + 2) + (baseX - 2))->Level;
                     stamp(baseX, baseY, family, level);                  // 0x59f362
                     stamp(baseX, baseY - (waveCountY + 2), family + 3, level); // 0x59f3dd
-                    cellSlots_[slotStride_ * (baseY + 2) + baseX]->IsoTileTypeIndex = 0xFFFF;
-                    cellSlots_[slotStride_ * (baseY - (waveCountY + 2)) + baseX]->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * (baseY + 2) + baseX)->IsoTileTypeIndex = 0xFFFF;
+                    SlotOrInvalid(slotStride_ * (baseY - (waveCountY + 2)) + baseX)->IsoTileTypeIndex = 0xFFFF;
                     for (int k = 0; k < waveCountY + 2; ++k)             // 0x59f467
-                        cellSlots_[slotStride_ * (baseY - k) + baseX]->Level -= 4;
+                        SlotOrInvalid(slotStride_ * (baseY - k) + baseX)->Level -= 4;
                     markCorner(baseX + 1, baseY + 2);                    // 0x59f53e
                     markCorner(baseX + 1, baseY - (waveCountY + 3));     // 0x59f5fb
                     for (int k = 0; k < waveCountY; )                    // 0x59f690

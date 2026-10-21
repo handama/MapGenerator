@@ -2173,6 +2173,13 @@ private:
     // nullptr when the index is out of range or the slot is null.
     MapCell* RawSlot(int index);
 
+    // Same lookup, but never null: an out-of-range index or an empty slot
+    // answers invalidCell_. The delta stage probes cells at fixed band offsets
+    // that can land outside the diamond near the map edge, and the vanilla code
+    // simply dereferences them because its slot array spans the whole 512x512
+    // coordinate space.
+    MapCell* SlotOrInvalid(int index);
+
     // 8-neighbour lookup (CellClass::GetNeighbourCell over the Neighbours
     // table): the cell one step from `cell` in direction `facing` (0 = N,
     // 1 = NE, ... 7 = NW), with the InvalidCell fallback.

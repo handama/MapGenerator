@@ -584,9 +584,13 @@ void RandomMapGenerator::InitCells()
     slotRows_ = 0;
     cellCount_ = 0;
 
-    // Rows cover every diagonal the iterator can touch (incl. the
-    // out-of-diamond probe cell that terminates iteration)
-    slotRows_ = size_.mapWidth + size_.mapHeight + 1;
+    // Rows must cover every coordinate CellExists() accepts, and that test
+    // allows y up to W'+2H'-1 (x == 1). Sizing this at W'+H'+1 - as the retail
+    // engine's fixed 512 grid made unnecessary - sent edge probes past the end
+    // of the allocation, where the read returns whatever the heap holds. That
+    // is the intermittent crash in the delta stage: sometimes a null, sometimes
+    // a stray pointer.
+    slotRows_ = size_.mapWidth + 2 * size_.mapHeight + 1;
 
     // Row pitch. The retail engine uses 512 unconditionally; sizing it from the
     // map lets w+h exceed 512 (the editor supports up to 2048).
@@ -1958,6 +1962,14 @@ MapCell* RandomMapGenerator::RawSlot(int index)
     if (index < 0 || index >= slotRows_ * slotStride_)
         return nullptr;
     return cellSlots_[index];
+}
+
+MapCell* RandomMapGenerator::SlotOrInvalid(int index)
+{
+    if (index < 0 || index >= slotRows_ * slotStride_)
+        return &invalidCell_;
+    MapCell* cell = cellSlots_[index];
+    return (cell != nullptr) ? cell : &invalidCell_;
 }
 
 // ---------------------------------------------------------------------------
