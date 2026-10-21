@@ -142,13 +142,19 @@ public:
     // Every section name of `file`, in any order.
     virtual void GetSectionNames(const char* file,
                                  std::vector<std::string>& out) const = 0;
+
+    // The section's key names as a NUL-separated list closed by an empty
+    // string - what GetPrivateProfileString does for a null key. Returns the
+    // number of bytes written, without the final terminator.
+    virtual int GetKeyList(const char* file, const char* section,
+                           char* out, int outSize) const = 0;
 };
 
 // Free helpers so the call sites stay as terse as the Win32 ones. `path` is
 // only used when no RmIniSource is installed.
 int  RmReadInt(const char* section, const char* key, int fallback, const char* path);
-void RmReadString(const char* section, const char* key, const char* fallback,
-                  char* out, int outSize, const char* path);
+unsigned int RmReadString(const char* section, const char* key, const char* fallback,
+                          char* out, int outSize, const char* path);
 void RmReadSectionNames(std::vector<std::string>& out, const char* path);
 
 // ============================================================================

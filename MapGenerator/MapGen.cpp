@@ -460,19 +460,26 @@ int RmReadInt(const char* section, const char* key, int fallback, const char* pa
                                                   static_cast<UINT>(fallback), path));
 }
 
-void RmReadString(const char* section, const char* key, const char* fallback,
-                  char* out, int outSize, const char* path)
+unsigned int RmReadString(const char* section, const char* key, const char* fallback,
+                          char* out, int outSize, const char* path)
 {
     if (out == nullptr || outSize <= 0)
-        return;
+        return 0;
     out[0] = '\0';
 
     if (RandomMapGenerator::s_iniSource != nullptr)
     {
+        // A null key means "list this section's key names", exactly like
+        // GetPrivateProfileString.
+        if (key == nullptr)
+            return static_cast<unsigned int>(
+                RandomMapGenerator::s_iniSource->GetKeyList(path, section, out, outSize));
+
         RandomMapGenerator::s_iniSource->GetString(path, section, key, out, outSize);
-        return;
+        return static_cast<unsigned int>(std::strlen(out));
     }
-    GetPrivateProfileStringA(section, key, fallback, out, outSize, path);
+    return static_cast<unsigned int>(
+        GetPrivateProfileStringA(section, key, fallback, out, outSize, path));
 }
 
 void RmReadSectionNames(std::vector<std::string>& out, const char* path)
